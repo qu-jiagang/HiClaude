@@ -19,7 +19,7 @@ class Handler(BaseHTTPRequestHandler):
                 "<!doctype html><meta charset='utf-8'>"
                 "<title>Agent E-Paper</title>"
                 "<style>body{margin:24px;font-family:sans-serif;background:#ddd}"
-                "iframe{width:400px;height:300px;border:0;background:white}</style>"
+                "iframe{width:960px;max-width:100%;aspect-ratio:16/9;border:0;background:white}</style>"
                 "<iframe src='/screen.svg'></iframe>"
             ).encode("utf-8")
             self.respond(body, "text/html; charset=utf-8")

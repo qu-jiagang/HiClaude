@@ -3,380 +3,37 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Agent 墨水屏桌面摆件实施指南</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #17202a;
-      --muted: #5f6b7a;
-      --line: #d7dde5;
-      --soft: #f3f6f8;
-      --accent: #0f6f8f;
-      --accent-2: #e9b44c;
-      --warn: #8a5a00;
-      --ok: #146c43;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      background: #ffffff;
-      color: var(--ink);
-      font: 16px/1.65 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK SC", "Microsoft YaHei", sans-serif;
-    }
-
-    main {
-      width: min(980px, calc(100% - 32px));
-      margin: 0 auto;
-      padding: 36px 0 64px;
-    }
-
-    header {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(280px, 430px);
-      gap: 26px;
-      align-items: center;
-      border-bottom: 2px solid var(--ink);
-      padding-bottom: 20px;
-      margin-bottom: 28px;
-    }
-
-    h1 {
-      margin: 0 0 10px;
-      font-size: clamp(28px, 4vw, 42px);
-      line-height: 1.15;
-      letter-spacing: 0;
-    }
-
-    h2 {
-      margin: 36px 0 14px;
-      padding-top: 8px;
-      border-top: 1px solid var(--line);
-      font-size: 24px;
-      line-height: 1.3;
-      letter-spacing: 0;
-    }
-
-    h3 {
-      margin: 22px 0 10px;
-      font-size: 18px;
-      letter-spacing: 0;
-    }
-
-    p {
-      margin: 10px 0;
-    }
-
-    a {
-      color: var(--accent);
-    }
-
-    code {
-      border: 1px solid var(--line);
-      border-radius: 4px;
-      background: var(--soft);
-      padding: 1px 5px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 0.94em;
-    }
-
-    pre {
-      overflow-x: auto;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #0f1720;
-      color: #edf2f7;
-      padding: 14px 16px;
-      line-height: 1.5;
-    }
-
-    pre code {
-      border: 0;
-      background: transparent;
-      color: inherit;
-      padding: 0;
-      font-size: 14px;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 14px 0;
-      font-size: 15px;
-    }
-
-    th,
-    td {
-      border: 1px solid var(--line);
-      padding: 10px 12px;
-      vertical-align: top;
-      text-align: left;
-    }
-
-    th {
-      background: var(--soft);
-      font-weight: 700;
-    }
-
-    ul,
-    ol {
-      padding-left: 1.35rem;
-    }
-
-    li {
-      margin: 6px 0;
-    }
-
-    .notice {
-      border-left: 4px solid var(--accent);
-      background: #eef8fb;
-      padding: 12px 14px;
-      margin: 16px 0;
-    }
-
-    .warning {
-      border-left-color: var(--warn);
-      background: #fff7e6;
-    }
-
-    .ok {
-      border-left-color: var(--ok);
-      background: #effaf3;
-    }
-
-    .checklist {
-      list-style: none;
-      padding-left: 0;
-    }
-
-    .checklist li {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px 12px;
-      margin: 8px 0;
-      background: #fff;
-    }
-
-    .step {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 14px 16px;
-      margin: 14px 0;
-    }
-
-    .step h3 {
-      margin-top: 0;
-    }
-
-    .small {
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    img {
-      display: block;
-      max-width: 100%;
-      height: auto;
-    }
-
-    .hero-copy {
-      min-width: 0;
-    }
-
-    .hero-art {
-      position: relative;
-      overflow: hidden;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #f7fafb;
-      margin: 0;
-    }
-
-    .hero-art::after {
-      content: none;
-    }
-
-    .visual-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-      margin: 16px 0;
-    }
-
-    .visual-card,
-    .metric,
-    .pulse-item {
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      background: #fff;
-    }
-
-    .visual-card {
-      padding: 14px;
-    }
-
-    .visual-card strong {
-      display: block;
-      margin-bottom: 6px;
-      font-size: 16px;
-    }
-
-    .metric-row {
-      display: grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-      margin: 16px 0;
-    }
-
-    .metric {
-      padding: 12px;
-      background: var(--soft);
-    }
-
-    .metric b {
-      display: block;
-      font-size: 22px;
-      line-height: 1.2;
-    }
-
-    .flow-image {
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      background: #f7fafb;
-      margin: 16px 0;
-    }
-
-    .animated-flow {
-      position: relative;
-      overflow: hidden;
-    }
-
-    .animated-flow::before {
-      content: "";
-      position: absolute;
-      z-index: 1;
-      top: 50%;
-      left: 7%;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent-2);
-      box-shadow: 0 0 0 6px rgba(233, 180, 76, .22);
-      animation: packet 3.2s linear infinite;
-    }
-
-    .pulse-list {
-      display: grid;
-      gap: 10px;
-      margin: 16px 0;
-    }
-
-    .pulse-item {
-      position: relative;
-      padding: 12px 12px 12px 40px;
-    }
-
-    .pulse-item::before {
-      content: "";
-      position: absolute;
-      left: 14px;
-      top: 18px;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-    }
-
-    .progress-demo {
-      display: grid;
-      gap: 8px;
-      margin: 14px 0;
-      max-width: 520px;
-    }
-
-    .bar {
-      overflow: hidden;
-      height: 14px;
-      border: 1px solid var(--ink);
-      background: #fff;
-    }
-
-    .bar span {
-      display: block;
-      width: 46%;
-      height: 100%;
-      background: var(--ink);
-      animation: fillbar 4s ease-in-out infinite;
-    }
-
-    @keyframes packet {
-      0% {
-        transform: translateX(0);
-        opacity: 0;
-      }
-      10%, 88% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateX(785px);
-        opacity: 0;
-      }
-    }
-
-    @keyframes fillbar {
-      0%, 100% {
-        width: 32%;
-      }
-      50% {
-        width: 72%;
-      }
-    }
-
-    @media (max-width: 820px) {
-      header,
-      .visual-grid,
-      .metric-row {
-        grid-template-columns: 1fr;
-      }
-
-      @keyframes packet {
-        0% {
-          transform: translateX(0);
-          opacity: 0;
-        }
-        10%, 88% {
-          opacity: 1;
-        }
-        100% {
-          transform: translateX(72vw);
-          opacity: 0;
-        }
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *,
-      *::before,
-      *::after {
-        animation-duration: .001ms !important;
-        animation-iteration-count: 1 !important;
-      }
-    }
-  </style>
+  <title>hiClaude 墨水屏桌面摆件实施指南</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+
 <main>
+  <nav class="toc" aria-label="目录">
+    <div class="toc-title">目录</div>
+    <a href="#section-0">0. 整体路线</a>
+    <a href="#section-1">1. 最终采购选择</a>
+    <a href="#section-2">2. 到货后先做检查</a>
+    <a href="#section-3">3. 本机先跑通状态服务</a>
+    <a href="#section-4">4. 安装官方开发环境</a>
+    <a href="#section-5">5. 电脑和墨水屏如何交互</a>
+    <a href="#section-6">6. 屏幕展示 UI</a>
+    <a href="#section-7">7. ESP32 固件开发计划</a>
+    <a href="#section-8">8. 支架和外壳</a>
+    <a href="#section-9">9. 验收标准</a>
+    <a href="#section-10">10. 项目文件</a>
+  </nav>
+
+  <!-- ====== Hero ====== -->
   <header>
     <div class="hero-copy">
-      <h1>Agent 墨水屏桌面摆件实施指南</h1>
-      <p>目标：用微雪 <code>ESP32-S3-ePaper-3.97</code> 显示 Claude Code / Codex 额度和当前任务状态。</p>
-      <p class="small">当前硬件路线：<code>ESP32-S3-ePaper-3.97 带锂电池版本</code>。不要再按树莓派路线采购。</p>
-      <div class="progress-demo" aria-label="状态进度动画">
-        <span>任务状态：思考中 / 执行中 / 需要操作 / 完成</span>
-        <div class="bar"><span></span></div>
+      <h1>hiClaude 墨水屏桌面摆件实施指南</h1>
+      <p>用 LilyGo <code>T5-ePaper-S3 4.7"</code> 显示 Claude Code / Codex 额度和任务状态。</p>
+      <p class="small">硬件：<code>LilyGo T5 4.7 英寸 e-Paper（ESP32-S3）</code></p>
+      <div class="status-strip" aria-label="hiClaude 核心显示内容">
+        <span>多任务队列</span>
+        <span>Claude Code / Codex 额度</span>
+        <span>最新提醒</span>
       </div>
     </div>
     <figure class="hero-art">
@@ -384,114 +41,97 @@
     </figure>
   </header>
 
-  <section>
+  <!-- ====== 0. 整体路线 ====== -->
+  <section id="section-0">
     <h2>0. 整体路线</h2>
-    <img class="flow-image" src="assets/checklist.svg" alt="购买、验货、服务、刷机、支架五步流程">
     <img class="flow-image" src="assets/assembly-motion.svg" alt="USB 烧录、Wi-Fi 拉取、墨水屏刷新、支架安装的动态图示">
     <div class="visual-grid">
       <div class="visual-card">
         <strong>先买对硬件</strong>
-        <span>只围绕 <code>ESP32-S3-ePaper-3.97</code> 做，避免混入 RLCD 或树莓派路线。</span>
+        <span>只围绕 <code>LilyGo T5 4.7" e-Paper</code> 做，避免混入其他尺寸或微雪/树莓派路线。</span>
       </div>
       <div class="visual-card">
         <strong>先跑官方示例</strong>
-        <span>确认屏幕、串口、Wi-Fi、电池都正常，再写项目固件。</span>
+        <span>确认屏幕、USB-C、Wi-Fi、电池、触摸都正常，再写项目固件。</span>
       </div>
       <div class="visual-card">
         <strong>电脑负责状态</strong>
-        <span>Claude/Codex 状态由电脑端维护，屏幕通过 Wi-Fi 拉取。</span>
+        <span>Claude Code / Codex 状态由电脑端维护，屏幕通过 Wi-Fi 拉取。</span>
       </div>
     </div>
   </section>
 
-  <section>
+  <!-- ====== 1. 最终采购选择 ====== -->
+  <section id="section-1">
     <h2>1. 最终采购选择</h2>
-    <p>购买这个版本：</p>
-    <pre><code>微雪 ESP32-S3-ePaper-3.97 带锂电池版本</code></pre>
+    <pre><code>LilyGo T5-ePaper-S3 4.7 英寸 e-Paper 显示屏</code></pre>
 
     <div class="metric-row">
       <div class="metric">
-        <b>3.97"</b>
+        <b>4.7"</b>
         <span>电子墨水屏</span>
       </div>
       <div class="metric">
-        <b>800x480</b>
-        <span>横屏信息面板</span>
+        <b>960×540</b>
+        <span>16 级灰度</span>
       </div>
       <div class="metric">
-        <b>ESP32-S3</b>
-        <span>Wi-Fi / BLE</span>
+        <b>ESP32-S3R8</b>
+        <span>16MB Flash / 8MB PSRAM</span>
       </div>
       <div class="metric">
-        <b>锂电池</b>
-        <span>可无线摆放</span>
+        <b>Wi-Fi / BLE</b>
+        <span>带电池、RTC、SD 卡槽</span>
       </div>
     </div>
 
     <table>
       <thead>
-        <tr>
-          <th>项目</th>
-          <th>结论</th>
-        </tr>
+        <tr><th>项目</th><th>说明</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td>主控</td>
-          <td>ESP32-S3，内置 Wi-Fi / BLE，不需要额外通信模块。</td>
-        </tr>
-        <tr>
-          <td>屏幕</td>
-          <td>3.97 寸电子墨水屏，800 x 480，适合横向桌面状态牌。</td>
-        </tr>
-        <tr>
-          <td>电池</td>
-          <td>选择带锂电池版本，方便后续无线摆放；开发阶段仍建议插 USB。</td>
-        </tr>
-        <tr>
-          <td>SD 卡 / 读卡器</td>
-          <td>第一版不需要。后续要缓存字体、图片、日志时再考虑。</td>
-        </tr>
-        <tr>
-          <td>Type-C 线</td>
-          <td>你已有就不用买，但必须是能传数据的线，不只是充电线。</td>
-        </tr>
+        <tr><td>主控</td><td>ESP32-S3R8，16MB Flash + 8MB PSRAM，Wi-Fi / BLE 5.0</td></tr>
+        <tr><td>屏幕</td><td>4.7 寸墨水屏，960×540，16 级灰度</td></tr>
+        <tr><td>电池</td><td>支持锂电池，ADC 电量检测（GPIO14）</td></tr>
+        <tr><td>其他</td><td>USB-C、SD 卡槽（SPI）、PCF8563 RTC、触摸可选</td></tr>
       </tbody>
     </table>
 
     <div class="notice warning">
-      下单前确认商品标题或规格里有 <code>ESP32-S3-ePaper-3.97</code>，不是 <code>ESP32-S3-RLCD-4.2</code>。RLCD 是反射式 LCD，不是真墨水屏。
+      确认标题含 <code>T5 4.7 inch e-Paper</code> 或 <code>T5-ePaper-S3</code>，别买成其他尺寸或 T-Display 系列。
     </div>
   </section>
 
-  <section>
+  <!-- ====== 2. 到货后先做检查 ====== -->
+  <section id="section-2">
     <h2>2. 到货后先做检查</h2>
     <div class="pulse-list" aria-label="到货检查重点">
-      <div class="pulse-item">先只接 USB，确认电脑能识别串口。</div>
-      <div class="pulse-item">先跑官方示例，确认屏幕能完整刷新。</div>
-      <div class="pulse-item">先拍照和量尺寸，最后再打印支架。</div>
+      <div class="pulse-item">只接 USB-C，确认电脑能识别串口。</div>
+      <div class="pulse-item">跑官方示例，确认屏幕完整刷新。</div>
+      <div class="pulse-item">拍照和量尺寸，最后再打印支架。</div>
     </div>
     <ul class="checklist">
-      <li>确认屏幕没有裂纹，排线没有明显折痕。</li>
-      <li>确认板子、锂电池、喇叭都在包装内。</li>
-      <li>先不要装外壳，不要固定胶，不要焊接额外东西。</li>
-      <li>用 Type-C 线接电脑，确认系统能识别 USB 串口。</li>
-      <li>拍正反面清晰照片，保留接口、按键、孔位位置，后续用于调整支架。</li>
+      <li>屏幕无裂纹，排线无折痕。</li>
+      <li>板子、电池连接器、按键齐全。</li>
+      <li>不要装外壳、不要固定胶、不要焊接。</li>
+      <li>USB-C 数据线接电脑，确认识别串口。</li>
+      <li>拍正反面照片，记录接口和孔位，后续调支架用。</li>
     </ul>
   </section>
 
-  <section>
+  <!-- ====== 3. 本机先跑通状态服务 ====== -->
+  <section id="section-3">
     <h2>3. 本机先跑通状态服务</h2>
     <p>在你的电脑上进入项目目录：</p>
     <pre><code>cd /home/midea/GithubRepository/HiClaude</code></pre>
 
     <div class="step">
-      <h3>3.1 生成演示状态</h3>
+      <h3>生成演示状态</h3>
       <pre><code>PYTHONPATH=src python3 -m agent_epaper.cli demo</code></pre>
     </div>
 
     <div class="step">
-      <h3>3.2 启动本机预览服务</h3>
+      <h3>启动本机预览服务</h3>
       <pre><code>PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 8765</code></pre>
       <p>浏览器打开：</p>
       <pre><code>http://127.0.0.1:8765/
@@ -500,16 +140,16 @@ http://127.0.0.1:8765/screen.svg</code></pre>
     </div>
 
     <div class="step">
-      <h3>3.3 更新任务状态</h3>
+      <h3>更新一个任务状态</h3>
       <pre><code>PYTHONPATH=src python3 -m agent_epaper.cli task \
   --name "实现墨水屏桌面摆件" \
   --status thinking \
   --progress 35 \
-  --detail "正在调试 ESP32 显示端"</code></pre>
+  --detail "正在调试 T5 显示端"</code></pre>
     </div>
 
     <div class="step">
-      <h3>3.4 更新额度显示</h3>
+      <h3>更新额度显示</h3>
       <pre><code>PYTHONPATH=src python3 -m agent_epaper.cli quota \
   --agent claude \
   --label "Claude Code" \
@@ -526,171 +166,213 @@ PYTHONPATH=src python3 -m agent_epaper.cli quota \
     </div>
 
     <div class="notice">
-      Claude Code / Codex 目前没有稳定公开的剩余额度 API。第一版先用命令或脚本写入额度；以后如果官方提供接口，再把采集器替换掉。
+      Claude Code / Codex 无稳定公开的额度 API，第一版用命令写入；以后有官方接口再替换采集器。
     </div>
   </section>
 
-  <section>
+  <!-- ====== 4. 安装官方开发环境 ====== -->
+  <section id="section-4">
     <h2>4. 安装官方开发环境</h2>
-    <p>先按微雪官方文档跑通示例，不要一开始就刷自己的固件。目标是确认硬件、屏幕、电池、按键都正常。</p>
+    <p>先按 LilyGo 官方文档跑通示例，不要一开始就刷自己的固件。</p>
 
     <ol>
-      <li>打开微雪官方 Wiki，搜索 <code>ESP32-S3-ePaper-3.97</code>。</li>
-      <li>按官方步骤安装 Arduino IDE 或 ESP-IDF 环境。</li>
-      <li>安装 ESP32 board support。</li>
-      <li>选择正确开发板、串口和 Flash/PSRAM 配置。</li>
-      <li>烧录官方 ePaper 示例。</li>
-      <li>确认屏幕能完整刷新，并且不会一直重启。</li>
+      <li>打开 <code>github.com/Xinyuan-LILYGO/LilyGo-EPD47</code></li>
+      <li>按 README 安装 Arduino IDE 或 VS Code + PlatformIO</li>
+      <li>安装 ESP32-S3 board support（<code>esp32 >= 2.0.17</code>）</li>
+      <li>选择 <code>ESP32S3 Dev Module</code>，Flash 16MB、PSRAM 8MB OPI</li>
+      <li>烧录官方示例，确认屏幕完整刷新</li>
+      <li>测试触摸（如买了触摸版）和电池 ADC</li>
     </ol>
 
     <div class="notice warning">
-      如果官方示例都刷不动，先排查驱动、串口、线材、BOOT 模式，不要继续改本项目代码。
+      官方示例刷不动就先排查 USB 驱动、串口、线材、BOOT 模式，不要继续改本项目代码。
     </div>
   </section>
 
-  <section>
+  <!-- ====== 5. 电脑和墨水屏如何交互 ====== -->
+  <section id="section-5">
     <h2>5. 电脑和墨水屏如何交互</h2>
     <div class="animated-flow">
-      <img class="flow-image" src="assets/architecture.svg" alt="电脑端通过 Wi-Fi 向 ESP32-S3 墨水屏提供状态数据">
+      <img class="flow-image" src="assets/architecture.svg" alt="电脑端通过 Wi-Fi 向 LilyGo T5 墨水屏提供状态数据">
     </div>
-    <p>最终运行结构如下：</p>
-    <pre><code>电脑端 Python 服务
-  维护 state.json
-  提供 HTTP 接口
-  渲染屏幕内容
-
-局域网 Wi-Fi
-  ESP32-S3 访问电脑 IP
-
-ESP32-S3-ePaper-3.97
-  下载状态或图片
-  刷新 800 x 480 墨水屏</code></pre>
-
-    <p>开发阶段需要 USB 线做烧录和串口调试。正常使用时，屏幕可以用电池或 USB 供电，通过 Wi-Fi 拉取电脑状态。</p>
+    <pre><code>电脑端 Python 服务         局域网 Wi-Fi           T5-ePaper-S3
+  维护 state.json         ←   ESP32-S3 访问  →     下载状态
+  提供 HTTP 接口              电脑 IP               刷新 960×540 墨水屏</code></pre>
+    <p>开发阶段 USB-C 烧录和调试，日常用电池或 USB-C 供电，Wi-Fi 拉取状态。</p>
   </section>
 
-  <section>
-    <h2>6. ESP32 固件开发计划</h2>
-    <p>硬件到手并跑通官方示例后，再添加本项目固件。推荐分三步做：</p>
+  <!-- ====== 6. 屏幕展示 UI ====== -->
+  <section id="section-6">
+    <h2>6. 屏幕展示 UI</h2>
+    <p><code>hiClaude</code> 按“多任务队列看板”设计：Claude Code 和 Codex 各占一列，额度和任务列表绑定显示，底部只保留最新需要注意的提醒。</p>
 
-    <div class="step">
-      <h3>6.1 先连 Wi-Fi</h3>
-      <p>固件写入你的 Wi-Fi 名称和密码，启动后能访问电脑的 <code>/state.json</code>。</p>
-    </div>
+    <figure class="epaper-concept">
+      <img src="assets/hiclaude-epaper-task-queue.png" alt="hiClaude 多任务墨水屏队列 UI 概念图">
+    </figure>
 
-    <div class="step">
-      <h3>6.2 再显示 JSON 文本</h3>
-      <p>先不追求好看，只把任务名、状态、进度、额度几个字段画到屏幕上。</p>
-    </div>
+    <div class="epaper-screen" role="img" aria-label="hiClaude 多任务墨水屏队列 UI 线框">
+      <div class="epaper-topbar">
+        <strong>hiClaude</strong>
+        <span>3 tasks · 1 running · Wi-Fi · 82% · 14:32</span>
+      </div>
 
-    <div class="step">
-      <h3>6.3 最后做完整排版</h3>
-      <p>优化 800 x 480 横屏布局，加入大状态、额度条、更新时间、网络/电池状态。</p>
+      <div class="epaper-agents">
+        <section class="epaper-agent" aria-label="Claude Code 任务队列">
+          <div class="agent-head">
+            <strong>Claude Code</strong>
+            <b>58/100 left</b>
+          </div>
+          <div class="quota-bar"><span style="width: 42%"></span></div>
+          <div class="task-row is-running">
+            <span>RUN</span>
+            <strong>实现墨水屏桌面摆件</strong>
+            <b>65%</b>
+            <div class="task-bar"><i style="width: 65%"></i></div>
+          </div>
+          <div class="task-row">
+            <span>WAIT</span>
+            <strong>修正文档 UI</strong>
+            <b>0%</b>
+            <div class="task-bar"><i style="width: 0%"></i></div>
+          </div>
+          <small>Reset 明日 08:00</small>
+        </section>
+
+        <section class="epaper-agent" aria-label="Codex 任务队列">
+          <div class="agent-head">
+            <strong>Codex</strong>
+            <b>32/50 left</b>
+          </div>
+          <div class="quota-bar"><span style="width: 36%"></span></div>
+          <div class="task-row">
+            <span>THINK</span>
+            <strong>生成固件渲染计划</strong>
+            <b>25%</b>
+            <div class="task-bar"><i style="width: 25%"></i></div>
+          </div>
+          <div class="task-empty">No more tasks</div>
+          <small>Reset 明日 08:00</small>
+        </section>
+      </div>
+
+      <div class="epaper-alert">Latest: Claude Code 需要确认 Wi-Fi 配置</div>
     </div>
 
     <div class="notice">
-      为了降低 ESP32 端复杂度，优先让电脑端负责采集和排版。ESP32 端只负责联网、解析简单数据和刷屏。
+      每列最多显示 3 个任务，超出时显示 <code>+2 more</code>；任务标题过长时截断，保留状态、进度和最新提醒。
     </div>
   </section>
 
-  <section>
-    <h2>7. 支架和外壳</h2>
-    <img class="flow-image" src="assets/stand-preview.svg" alt="3D 打印桌面支架外观，包含前托、后靠、Type-C 走线槽和电池避让位">
-    <p>需要 3D 打印，但第一版只打印“桌面倾斜支架”，不要直接做全包外壳。原因是全包外壳必须精确匹配螺丝孔、Type-C、按键、拨轮、电池和排线位置；你还没拿到实物前，直接做全包外壳很容易卡接口或顶到电池。</p>
+  <!-- ====== 7. ESP32 固件开发计划 ====== -->
+  <section id="section-7">
+    <h2>7. ESP32 固件开发计划</h2>
+    <p>跑通官方示例后分三步：</p>
+
+    <div class="step">
+      <h3>先连 Wi-Fi</h3>
+      <p>写入 Wi-Fi 名称和密码，启动后访问电脑 <code>/state.json</code>。</p>
+    </div>
+
+    <div class="step">
+      <h3>再显示文本</h3>
+      <p>先把 agent 名称、任务列表、状态、进度、额度几个字段画到屏幕上。</p>
+    </div>
+
+    <div class="step">
+      <h3>最后做排版</h3>
+      <p>把 <code>task</code> 扩展成按 agent 分组的 <code>tasks[]</code> 队列，按第 6 节的 960×540 双列看板绘制。</p>
+    </div>
+
+    <div class="notice">
+      电脑端负责采集和排版，ESP32 只负责联网、解析数据和刷屏。后续可用板载 RTC 离线显示。
+    </div>
+  </section>
+
+  <!-- ====== 8. 支架和外壳 ====== -->
+  <section id="section-8">
+    <h2>8. 支架和外壳</h2>
+    <img class="flow-image" src="assets/stand-enclosure-concept-refined.png" alt="墨水屏一体化支架和薄背壳效果图">
+    <p>目标直接做成桌面倾斜支架 + 薄背壳一体结构：正面像一个完整桌面摆件，背面只在必要区域开窗和留口。LilyGo T5-ePaper-S3 背面有 USB-C、TF 卡槽、JST-PH 2.0 电池座、按钮、ESP32-S3 模组和排针，Touch / Basic、V2.3 / V2.4 布局也会有差异，所以外壳必须用实物尺寸校准后再打印。</p>
 
     <table>
       <thead>
-        <tr>
-          <th>阶段</th>
-          <th>打印什么</th>
-          <th>为什么</th>
-        </tr>
+        <tr><th>模块</th><th>设计要求</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td>第一版</td>
-          <td>倾斜桌面支架：前托 + 后靠 + Type-C 走线槽 + 电池避让位。</td>
-          <td>不依赖精确孔位，能先把设备稳定放在桌面上，看起来也不笨重。</td>
-        </tr>
-        <tr>
-          <td>第二版</td>
-          <td>薄背壳：按实物孔位固定，露出右侧按键、拨轮和 Type-C。</td>
-          <td>等固件和摆放角度确定后再做，避免反复打印。</td>
-        </tr>
-        <tr>
-          <td>不建议先做</td>
-          <td>全包围外壳。</td>
-          <td>会增加厚度，也最容易和电池、接口、散热、按键干涉。</td>
-        </tr>
+        <tr><td>外观</td><td>横屏桌面摆件形态，约 70° 倾角，前方只露出屏幕和窄边框，背面结构尽量干净。</td></tr>
+        <tr><td>支撑</td><td>底座 + 前下托 + 后背壳共同受力，重心落在底座内，避免屏幕玻璃或排线承力。</td></tr>
+        <tr><td>背壳</td><td>薄背壳按实物外形包住 PCB 边缘，保留背面大开窗，避让 ESP32-S3、TF 卡槽、电池座、排针和高元件。</td></tr>
+        <tr><td>接口</td><td>USB-C、TF 卡槽、电池接口、按钮都做独立开口；USB-C 预留直插线和弯头线空间。</td></tr>
+        <tr><td>固定</td><td>优先使用实物螺丝孔固定；孔位不准前不依赖硬卡扣，允许先用 M2/M2.5 螺丝或热熔铜柱方案。</td></tr>
       </tbody>
     </table>
 
-    <p>当前已经新增一个 3.97 寸路线专用的第一版支架模型：</p>
-    <pre><code>cad/waveshare_epaper_397_desk_stand.scad</code></pre>
+    <pre><code>cad/lilygo_t5_47_desk_stand.py
+cad/lilygo_t5_47_desk_stand.step
+cad/lilygo_t5_47_mounted.step</code></pre>
+    <p>当前 CAD 已把桌面底座、前下托、倾斜背壳、背面大开窗、右侧非屏幕宽肩避让、USB-C/TF/按钮/JST-PH 开口合进同一个参数模型，并另有装配预览 STEP 展示墨水屏摆在支架上的状态；改 CadQuery 脚本顶部参数即可适配实际尺寸。</p>
 
-    <p>这个模型是通用托架，不靠螺丝孔固定。打印后设备从前方放入，底部由前托挡住，背面靠在后靠上，Type-C 线从后方走线槽出去。到货后如果发现设备宽度或厚度不合适，只需要改 OpenSCAD 顶部几个参数。</p>
-
-    <p>到货后仍然需要量这些尺寸，用于第二版薄背壳：</p>
+    <p>一体化支架/外壳原则：</p>
     <ul>
-      <li>整板宽度和高度</li>
-      <li>屏幕可视区域位置</li>
-      <li>螺丝孔直径和孔距</li>
-      <li>Type-C 口位置</li>
-      <li>电池厚度和位置</li>
-      <li>按键位置</li>
+      <li>前框只压 PCB 或结构边，不夹紧屏幕玻璃，不碰 e-paper 排线。</li>
+      <li>背壳中间开大窗，给电池座、TF 卡槽、ESP32-S3 模组和背面元件留空间。</li>
+      <li>USB-C 一侧留横向和后向走线空间，避免直插线顶住支架。</li>
+      <li>电池接口附近预留插头高度和线缆弯折半径，不让电池线成为受力点。</li>
+      <li>按钮区域不要被前托或背靠遮住，方便复位、下载和日常唤醒。</li>
+      <li>如果买的是焊排针版本，排针高度要单独避让。</li>
+      <li>所有外露边倒圆角，底座加宽并保留防滑脚垫位置，避免桌面倾倒。</li>
+    </ul>
+
+    <p>到货后量的尺寸：</p>
+    <ul>
+      <li>整板宽高</li>
+      <li>屏幕可视区域</li>
+      <li>螺丝孔径和孔距</li>
+      <li>USB-C 位置和插线后所需空间</li>
+      <li>TF 卡槽位置和插卡空间</li>
+      <li>JST-PH 2.0 电池连接器位置、厚度和线缆出线方向</li>
+      <li>按键位置、按压方向和按压行程</li>
+      <li>ESP32-S3 模组、排针、背面元件和焊点的最高高度</li>
+      <li>是否为 Touch / Basic、V2.3 / V2.4，以及实际背面布局差异</li>
     </ul>
   </section>
 
-  <section>
-    <h2>8. 验收标准</h2>
+  <!-- ====== 9. 验收标准 ====== -->
+  <section id="section-9">
+    <h2>9. 验收标准</h2>
     <ul class="checklist">
       <li>电脑端能打开 <code>http://127.0.0.1:8765/state.json</code>。</li>
       <li>修改任务状态后，浏览器预览能同步变化。</li>
-      <li>官方示例能让微雪屏幕完整刷新。</li>
-      <li>ESP32 能连上 Wi-Fi，并访问电脑端状态接口。</li>
-      <li>屏幕能显示 Claude Code / Codex 额度、当前任务状态和进度。</li>
-      <li>断开 USB 后，电池供电能继续工作，或至少保留最后一屏。</li>
-      <li>支架能稳定放桌面，不遮挡 Type-C、电池和按键。</li>
+      <li>官方示例能让 T5 屏幕完整刷新 16 级灰度。</li>
+      <li>ESP32-S3 能连上 Wi-Fi，并访问电脑端状态接口。</li>
+      <li>屏幕能显示 Claude Code / Codex 额度、各自任务队列状态和进度。</li>
+      <li>断开 USB-C 后，电池供电能继续工作，或至少保留最后一屏。</li>
+      <li>支架能稳定放桌面，不遮挡 USB-C、电池连接器和按键。</li>
     </ul>
   </section>
 
-  <section>
-    <h2>9. 当前项目文件说明</h2>
+  <!-- ====== 10. 当前项目文件说明 ====== -->
+  <section id="section-10">
+    <h2>10. 项目文件</h2>
     <table>
       <thead>
-        <tr>
-          <th>文件</th>
-          <th>用途</th>
-        </tr>
+        <tr><th>文件</th><th>用途</th></tr>
       </thead>
       <tbody>
-        <tr>
-          <td><code>src/agent_epaper/cli.py</code></td>
-          <td>更新任务状态和额度。</td>
-        </tr>
-        <tr>
-          <td><code>src/agent_epaper/server.py</code></td>
-          <td>启动电脑端 HTTP 服务。</td>
-        </tr>
-        <tr>
-          <td><code>src/agent_epaper/render.py</code></td>
-          <td>生成本机 SVG 预览。</td>
-        </tr>
-        <tr>
-          <td><code>cad/waveshare_epaper_397_desk_stand.scad</code></td>
-          <td>3.97 寸路线的第一版桌面托架，可先打印试放。</td>
-        </tr>
-        <tr>
-          <td><code>assets/*.svg</code></td>
-          <td>HTML 中使用的产品、流程和支架动态图示。</td>
-        </tr>
-        <tr>
-          <td><code>docs/</code></td>
-          <td>早期调研文档，部分内容仍提到其他硬件路线，以本 HTML 为准。</td>
-        </tr>
+        <tr><td><code>src/agent_epaper/cli.py</code></td><td>更新任务状态和额度</td></tr>
+        <tr><td><code>src/agent_epaper/server.py</code></td><td>电脑端 HTTP 服务</td></tr>
+        <tr><td><code>src/agent_epaper/render.py</code></td><td>SVG 预览渲染</td></tr>
+        <tr><td><code>cad/lilygo_t5_47_desk_stand.py</code></td><td>桌面托架 CadQuery 参数模型</td></tr>
+        <tr><td><code>cad/lilygo_t5_47_desk_stand.step</code></td><td>可打印桌面支架 STEP</td></tr>
+        <tr><td><code>cad/lilygo_t5_47_mounted.step</code></td><td>墨水屏摆在支架上的展示 STEP</td></tr>
+        <tr><td><code>docs/assets/stand-enclosure-concept-refined.png</code></td><td>基于 LilyGo T5 4.7 参考图修订的一体化支架/外壳效果图</td></tr>
+        <tr><td><code>docs/assets/hiclaude-epaper-task-queue.png</code></td><td>hiClaude 多任务墨水屏队列 UI 生图概念稿</td></tr>
+        <tr><td><code>docs/reference/lilygo_t5_47_reference.md</code></td><td>LilyGo T5 4.7 官方资料、图片和 CAD 参考</td></tr>
+        <tr><td><code>assets/*.svg</code></td><td>流程图和产品图示</td></tr>
       </tbody>
     </table>
   </section>
+
 </main>
 </body>
 </html>

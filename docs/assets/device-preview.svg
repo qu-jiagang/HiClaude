@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1040" height="620" viewBox="0 0 1040 620" role="img" aria-labelledby="title desc">
-  <title id="title">Waveshare ESP32-S3-ePaper-3.97 agent display concept</title>
-  <desc id="desc">A concept drawing based on Waveshare ESP32-S3-ePaper-3.97 with blue PCB, 3.97 inch e-paper panel, battery, buttons and USB-C.</desc>
+  <title id="title">LilyGo T5-ePaper-S3 4.7 inch agent display concept</title>
+  <desc id="desc">A concept drawing based on LilyGo T5-ePaper-S3 with 4.7 inch e-paper panel, ESP32-S3, battery, buttons and USB-C.</desc>
   <defs>
     <linearGradient id="page" x1="0" x2="1" y1="0" y2="1">
       <stop offset="0" stop-color="#f8fbfc"/>
@@ -103,7 +103,7 @@
   <g transform="translate(112 40)">
     <rect x="0" y="0" width="272" height="42" rx="21" class="callout"/>
     <circle cx="25" cy="21" r="8" fill="#0f6f8f" class="blink"/>
-    <text x="48" y="28" font-family="Arial, sans-serif" font-size="18" font-weight="700" class="ink">微雪 ESP32-S3-ePaper-3.97</text>
+    <text x="48" y="28" font-family="Arial, sans-serif" font-size="18" font-weight="700" class="ink">LilyGo T5-ePaper-S3 4.7"</text>
   </g>
 
   <g transform="translate(716 498)">
