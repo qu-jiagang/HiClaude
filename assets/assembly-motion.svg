@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="360" viewBox="0 0 1040 360" role="img" aria-labelledby="title desc">
+  <title id="title">Assembly sequence animation</title>
+  <desc id="desc">USB debug, Wi-Fi update, e-paper refresh and stand installation sequence.</desc>
+  <defs>
+    <style>
+      .card { fill: #fff; stroke: #17202a; stroke-width: 3; }
+      .title { font-family: Arial, sans-serif; font-size: 23px; font-weight: 700; fill: #111; }
+      .text { font-family: Arial, sans-serif; font-size: 16px; fill: #5f6b7a; }
+      .path { stroke: #0f6f8f; stroke-width: 4; stroke-linecap: round; stroke-dasharray: 10 12; animation: dash 1.4s linear infinite; }
+      @keyframes dash { to { stroke-dashoffset: -44; } }
+    </style>
+  </defs>
+  <rect width="1040" height="360" rx="18" fill="#f7fafb"/>
+  <path d="M228 180h92M472 180h92M716 180h92" class="path"/>
+  <g class="node" transform="translate(56 88)">
+    <rect class="card" width="172" height="184" rx="14"/>
+    <text x="86" y="54" text-anchor="middle" class="title">USB</text>
+    <text x="86" y="92" text-anchor="middle" class="text">烧录固件</text>
+    <text x="86" y="122" text-anchor="middle" class="text">看串口日志</text>
+    <path d="M66 152h40v16H66zM78 136h16v16" fill="#17202a"/>
+  </g>
+  <g class="node node2" transform="translate(300 88)">
+    <rect class="card" width="172" height="184" rx="14"/>
+    <text x="86" y="54" text-anchor="middle" class="title">Wi-Fi</text>
+    <text x="86" y="92" text-anchor="middle" class="text">访问电脑</text>
+    <text x="86" y="122" text-anchor="middle" class="text">拉取状态</text>
+    <path d="M52 154c18-18 50-18 68 0M66 169c9-9 31-9 40 0M84 184l4-4 4 4" fill="none" stroke="#17202a" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  <g class="node node3" transform="translate(544 88)">
+    <rect class="card" width="172" height="184" rx="14"/>
+    <text x="86" y="54" text-anchor="middle" class="title">刷新</text>
+    <text x="86" y="92" text-anchor="middle" class="text">800 x 480</text>
+    <text x="86" y="122" text-anchor="middle" class="text">显示状态</text>
+    <rect x="42" y="146" width="88" height="42" fill="#fff" stroke="#17202a" stroke-width="4"/>
+    <rect x="42" y="146" width="36" height="42" fill="#17202a"/>
+  </g>
+  <g class="node node4" transform="translate(788 88)">
+    <rect class="card" width="172" height="184" rx="14"/>
+    <text x="86" y="54" text-anchor="middle" class="title">支架</text>
+    <text x="86" y="92" text-anchor="middle" class="text">桌面倾斜</text>
+    <text x="86" y="122" text-anchor="middle" class="text">保留接口</text>
+    <path d="M46 178h84l-18-52H64z" fill="#17202a"/>
+  </g>
+</svg>

@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="620" viewBox="0 0 1040 620" role="img" aria-labelledby="title desc">
+  <title id="title">Waveshare ESP32-S3-ePaper-3.97 agent display concept</title>
+  <desc id="desc">A concept drawing based on Waveshare ESP32-S3-ePaper-3.97 with blue PCB, 3.97 inch e-paper panel, battery, buttons and USB-C.</desc>
+  <defs>
+    <linearGradient id="page" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#f8fbfc"/>
+      <stop offset="1" stop-color="#e7eef2"/>
+    </linearGradient>
+    <linearGradient id="pcb" x1="0" x2="1">
+      <stop offset="0" stop-color="#0d5e87"/>
+      <stop offset="1" stop-color="#063f66"/>
+    </linearGradient>
+    <filter id="shadow" x="-15%" y="-15%" width="130%" height="145%">
+      <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#10202a" flood-opacity=".22"/>
+    </filter>
+    <style>
+      .ink { fill: #111; }
+      .muted { fill: #5d6874; }
+      .trace { stroke: #7fc7de; stroke-width: 2; fill: none; opacity: .75; }
+      .pin { fill: #f0c86b; stroke: #7b5a15; stroke-width: 1; }
+      .callout { fill: #fff; stroke: #17202a; stroke-width: 2; }
+      .packet { animation: slide 3.2s ease-in-out infinite; }
+      .blink { animation: blink 1.6s ease-in-out infinite; }
+      .thinking { animation: thinking 2.8s steps(4, end) infinite; }
+      @keyframes slide {
+        0%, 12% { transform: translateX(-28px); opacity: 0; }
+        25%, 80% { opacity: 1; }
+        100% { transform: translateX(54px); opacity: 0; }
+      }
+      @keyframes blink {
+        0%, 100% { opacity: .25; }
+        50% { opacity: 1; }
+      }
+      @keyframes thinking {
+        0% { opacity: .25; }
+        35% { opacity: .6; }
+        70%, 100% { opacity: 1; }
+      }
+    </style>
+  </defs>
+  <rect width="1040" height="620" fill="url(#page)"/>
+  <ellipse cx="520" cy="528" rx="340" ry="42" fill="#c8d3da" opacity=".56"/>
+
+  <g filter="url(#shadow)" transform="translate(102 76)">
+    <rect x="0" y="0" width="836" height="410" rx="18" fill="url(#pcb)"/>
+    <rect x="22" y="22" width="576" height="346" rx="10" fill="#d9d8cd" stroke="#1b2930" stroke-width="5"/>
+    <rect x="48" y="48" width="524" height="292" rx="4" fill="#fbfaf3" stroke="#111" stroke-width="3"/>
+    <rect x="48" y="48" width="524" height="44" fill="#111"/>
+    <text x="70" y="78" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#fff">Agent Desk</text>
+    <text x="548" y="78" font-family="Arial, sans-serif" font-size="20" font-weight="700" text-anchor="end" fill="#fff">Wi-Fi</text>
+
+    <text x="70" y="130" font-family="Arial, sans-serif" font-size="25" font-weight="700" class="ink">Claude Code</text>
+    <rect x="70" y="148" width="292" height="18" fill="#fff" stroke="#111" stroke-width="2"/>
+    <rect x="70" y="148" width="142" height="18" fill="#111"/>
+    <text x="548" y="166" font-family="Arial, sans-serif" font-size="20" text-anchor="end" class="ink">58 / 100</text>
+
+    <text x="70" y="214" font-family="Arial, sans-serif" font-size="25" font-weight="700" class="ink">Codex</text>
+    <rect x="70" y="232" width="292" height="18" fill="#fff" stroke="#111" stroke-width="2"/>
+    <rect x="70" y="232" width="104" height="18" fill="#111"/>
+    <text x="548" y="250" font-family="Arial, sans-serif" font-size="20" text-anchor="end" class="ink">32 / 50</text>
+
+    <text x="70" y="300" font-family="Arial, sans-serif" font-size="22" font-weight="700" class="ink">当前任务：调试显示端</text>
+    <g class="thinking">
+      <circle cx="458" cy="294" r="5" fill="#111"/>
+      <circle cx="476" cy="294" r="5" fill="#111"/>
+      <circle cx="494" cy="294" r="5" fill="#111"/>
+    </g>
+
+    <rect x="614" y="40" width="148" height="42" rx="5" fill="#1f2f38" stroke="#78bdd5" stroke-width="2"/>
+    <text x="688" y="67" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#d8f3ff">ESP32-S3</text>
+    <rect x="614" y="104" width="148" height="88" rx="6" fill="#0b3856" stroke="#78bdd5" stroke-width="2"/>
+    <text x="688" y="137" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#d8f3ff">RTC / SHTC3</text>
+    <text x="688" y="164" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#d8f3ff">电源管理</text>
+    <rect x="635" y="224" width="102" height="64" rx="4" fill="#0b2534" stroke="#7fc7de" stroke-width="2"/>
+    <text x="686" y="262" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" fill="#d8f3ff">Micro SD</text>
+
+    <g transform="translate(614 320)">
+      <rect x="0" y="0" width="52" height="26" rx="4" fill="#111"/>
+      <rect x="74" y="0" width="52" height="26" rx="4" fill="#111"/>
+      <text x="26" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#d8f3ff">BOOT</text>
+      <text x="100" y="45" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#d8f3ff">PWR</text>
+    </g>
+
+    <rect x="786" y="154" width="42" height="72" rx="8" fill="#d9dee2" stroke="#1d2930" stroke-width="3"/>
+    <text x="807" y="244" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#d8f3ff">拨轮</text>
+    <rect x="787" y="292" width="40" height="22" rx="4" fill="#d9dee2" stroke="#1d2930" stroke-width="3"/>
+    <text x="807" y="335" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#d8f3ff">Type-C</text>
+
+    <path d="M598 58c-64 0-94 40-126 87M598 146c-72 6-108 31-150 89M598 260c-42-2-76 18-114 51" class="trace"/>
+    <g class="packet">
+      <circle cx="548" cy="94" r="6" fill="#e9b44c"/>
+      <circle cx="520" cy="194" r="6" fill="#e9b44c"/>
+      <circle cx="552" cy="280" r="6" fill="#e9b44c"/>
+    </g>
+
+    <g transform="translate(44 380)">
+      <rect x="0" y="0" width="48" height="36" fill="#f3b23c"/>
+      <path d="M48 16h72" stroke="#f3b23c" stroke-width="16" stroke-linecap="round"/>
+      <text x="142" y="24" font-family="Arial, sans-serif" font-size="16" fill="#d8f3ff">屏幕排线</text>
+    </g>
+  </g>
+
+  <g transform="translate(112 40)">
+    <rect x="0" y="0" width="272" height="42" rx="21" class="callout"/>
+    <circle cx="25" cy="21" r="8" fill="#0f6f8f" class="blink"/>
+    <text x="48" y="28" font-family="Arial, sans-serif" font-size="18" font-weight="700" class="ink">微雪 ESP32-S3-ePaper-3.97</text>
+  </g>
+
+  <g transform="translate(716 498)">
+    <rect x="0" y="0" width="212" height="52" rx="12" fill="#fff" stroke="#17202a" stroke-width="2"/>
+    <text x="106" y="33" text-anchor="middle" font-family="Arial, sans-serif" font-size="18" font-weight="700" class="ink">带锂电池版本</text>
+  </g>
+</svg>
