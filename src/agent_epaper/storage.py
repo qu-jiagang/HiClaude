@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 from pathlib import Path
 
 from .model import DisplayState
@@ -27,9 +28,23 @@ def load_state(path: Path | None = None) -> DisplayState:
 def save_state(state: DisplayState, path: Path | None = None) -> Path:
     state_path = path or default_state_path()
     state_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp_path = state_path.with_suffix(".tmp")
-    with tmp_path.open("w", encoding="utf-8") as handle:
-        json.dump(state.to_dict(), handle, ensure_ascii=False, indent=2)
-        handle.write("\n")
-    tmp_path.replace(state_path)
+    tmp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=state_path.parent,
+            prefix=f".{state_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            tmp_name = handle.name
+            json.dump(state.to_dict(), handle, ensure_ascii=False, indent=2)
+            handle.write("\n")
+        Path(tmp_name).replace(state_path)
+    finally:
+        if tmp_name:
+            tmp_path = Path(tmp_name)
+            if tmp_path.exists():
+                tmp_path.unlink()
     return state_path
