@@ -59,7 +59,7 @@ def test_svg_contains_status_label() -> None:
         ],
     )
     svg = render_svg(state)
-    assert "需要操作" in svg
+    assert "等待" in svg
     assert "测试任务" in svg
     assert "第二任务" in svg
     assert "第三任务" in svg

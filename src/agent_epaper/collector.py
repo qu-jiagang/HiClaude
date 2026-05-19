@@ -96,6 +96,11 @@ def _get(url: str, headers: dict) -> dict | None:
 
 def _claude_token() -> str:
     creds = _keychain_json(_CLAUDE_KEYCHAIN_SERVICE)
+    if not creds:
+        try:
+            creds = json.loads((Path.home() / ".claude" / ".credentials.json").read_text())
+        except Exception:
+            creds = {}
     oauth = creds.get("claudeAiOauth", {})
     expires_at = oauth.get("expiresAt", 0)
     if expires_at and expires_at < datetime.now().timestamp() * 1000:
@@ -148,19 +153,19 @@ def collect_claude_quotas() -> list[Quota]:
     return quotas
 
 
-def collect_claude_task() -> Task | None:
+def collect_claude_tasks() -> list[Task]:
+    """Return one Task per alive Claude session.
+
+    Sorted by priority (running > metadata-busy > idle) then by transcript
+    recency, so a still-busy session is never masked by a just-finished one.
+    """
     sessions_dir = Path.home() / ".claude" / "sessions"
     if not sessions_dir.exists():
-        return None
+        return []
 
     projects_dir = Path.home() / ".claude" / "projects"
 
-    # Among ALL alive sessions, pick the one whose transcript JSONL was most
-    # recently modified — i.e. the conversation actually in use right now.
-    # (Old code took the first glob hit, which could lock onto a stale
-    # session whose transcript no longer exists and then give up.)
-    best_transcript: Path | None = None
-    best_mtime = -1.0
+    entries: list[tuple[int, float, Task]] = []
     for f in sessions_dir.glob("*.json"):
         try:
             meta = json.loads(f.read_text())
@@ -169,6 +174,11 @@ def collect_claude_task() -> Task | None:
             if not (pid and sid):
                 continue
             os.kill(pid, 0)   # raises if the process is dead
+            proc_start = meta.get("procStart")
+            if proc_start:
+                actual_start = Path(f"/proc/{pid}/stat").read_text().split()[21]
+                if str(proc_start) != actual_start:
+                    continue
         except Exception:
             continue
         matches = list(projects_dir.glob(f"**/{sid}.jsonl"))
@@ -176,20 +186,71 @@ def collect_claude_task() -> Task | None:
             continue
         jsonl = max(matches, key=lambda p: p.stat().st_mtime)
         mtime = jsonl.stat().st_mtime
-        if mtime > best_mtime:
-            best_mtime, best_transcript = mtime, jsonl
+        task = _claude_task_from_jsonl(jsonl)
+        if task is None:
+            continue
+        cwd = meta.get("cwd")
+        if cwd:
+            task.detail = Path(cwd).name
+        entries.append((_claude_session_priority(meta, task), mtime, task))
 
-    if best_transcript is None:
-        return None
+    entries.sort(key=lambda e: (e[0], e[1]), reverse=True)
+    return [task for _, _, task in entries]
 
-    # Walk the transcript backwards: capture the latest human prompt (task
-    # name) and the type/stop_reason/timestamp of the most recent turn.
+
+def collect_claude_task() -> Task | None:
+    tasks = collect_claude_tasks()
+    return tasks[0] if tasks else None
+
+
+def _claude_session_priority(meta: dict, task: Task) -> int:
+    if task.status == TaskStatus.RUNNING:
+        return 2
+    if meta.get("status") == "busy":
+        return 1
+    return 0
+
+
+def _claude_user_text(obj: dict) -> str:
+    if obj.get("isMeta"):
+        return ""
+    content = obj.get("message", {}).get("content")
+    text = ""
+    if isinstance(content, str):
+        text = content.strip()
+    elif isinstance(content, list):
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text":
+                text = str(item.get("text", "")).strip()
+                if text:
+                    break
+    if _is_claude_internal_user_text(text):
+        return ""
+    return text
+
+
+def _is_claude_internal_user_text(text: str) -> bool:
+    if not text:
+        return True
+    stripped = text.lstrip()
+    internal_prefixes = (
+        "<task-notification",
+        "<ide_opened_file",
+        "<command-name",
+        "<command-message",
+        "<local-command-stdout",
+        "<local-command-stderr",
+    )
+    return stripped.startswith(internal_prefixes)
+
+
+def _claude_task_from_jsonl(path: Path) -> Task | None:
     last_user_text: str | None = None
     last_type: str | None = None
     last_ts: str | None = None
     last_stop: str | None = None
     try:
-        lines = best_transcript.read_text(encoding="utf-8").splitlines()
+        lines = path.read_text(encoding="utf-8").splitlines()
         for line in reversed(lines):
             try:
                 obj = json.loads(line)
@@ -198,18 +259,15 @@ def collect_claude_task() -> Task | None:
             t = obj.get("type")
             if t not in ("user", "assistant"):
                 continue
+            if t == "user" and not _claude_user_text(obj):
+                continue
             if last_type is None:
                 last_type = t
                 last_ts = obj.get("timestamp")
                 if t == "assistant":
                     last_stop = obj.get("message", {}).get("stop_reason")
             if t == "user" and not last_user_text:
-                for c in obj.get("message", {}).get("content", []):
-                    if isinstance(c, dict) and c.get("type") == "text":
-                        txt = c["text"].strip()
-                        if txt:
-                            last_user_text = txt
-                            break
+                last_user_text = _claude_user_text(obj)
             if last_user_text and last_type:
                 break
     except Exception:
@@ -222,15 +280,7 @@ def collect_claude_task() -> Task | None:
     # idle is only emitted by collect()'s fallback when no session is alive.
     status = TaskStatus.RUNNING
     if last_type == "assistant" and last_stop != "tool_use":
-        recent = False
-        if last_ts:
-            try:
-                ts = datetime.fromisoformat(last_ts.replace("Z", "+00:00"))
-                recent = (datetime.now(timezone.utc) - ts).total_seconds() <= 20
-            except Exception:
-                recent = False
-        if not recent:
-            status = TaskStatus.NEEDS_ACTION
+        status = TaskStatus.NEEDS_ACTION
 
     name = last_user_text.replace("\n", " ")[:50]
     return Task(name=name, status=status)
@@ -254,6 +304,86 @@ def _codex_main_sessions() -> list[Path]:
     return result
 
 
+def _codex_latest_rate_limits() -> dict | None:
+    """Newest account-wide rate_limits across ALL codex sessions.
+
+    Rate limits are account-scoped, so quota may be consumed in cli/subagent
+    sessions that ``_codex_main_sessions`` (vscode-only) ignores. The most
+    recently modified session file holds the freshest token_count.
+    """
+    files = sorted(
+        Path.home().glob(".codex/sessions/**/*.jsonl"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    for f in files:
+        rate_limits: dict | None = None
+        try:
+            for line in f.open():
+                obj = json.loads(line)
+                if obj.get("type") == "event_msg":
+                    p = obj.get("payload", {})
+                    if p.get("type") == "token_count" and p.get("rate_limits"):
+                        rate_limits = p["rate_limits"]
+        except Exception:
+            continue
+        if rate_limits:
+            return rate_limits
+    return None
+
+
+def _codex_auth() -> tuple[str, str]:
+    """(access_token, account_id) from mac keychain or ~/.codex/auth.json."""
+    creds = _keychain_json(_CODEX_KEYCHAIN_SERVICE)
+    tokens = creds.get("tokens") if isinstance(creds, dict) else None
+    if not tokens:
+        try:
+            data = json.loads((Path.home() / ".codex" / "auth.json").read_text())
+            tokens = data.get("tokens", {})
+        except Exception:
+            tokens = {}
+    if not isinstance(tokens, dict):
+        return "", ""
+    return tokens.get("access_token", ""), tokens.get("account_id", "")
+
+
+def _codex_quotas_from_api() -> list[Quota] | None:
+    """Live, real-time quota — same endpoint the Codex IDE uses.
+
+    Session-log token_count only snapshots the *last completed turn*, so it
+    lags behind actual consumption. The usage API is authoritative.
+    """
+    token, account_id = _codex_auth()
+    if not token:
+        return None
+    headers = {"Authorization": f"Bearer {token}"}
+    if account_id:
+        headers["chatgpt-account-id"] = account_id
+    data = _get(_CODEX_USAGE_URL, headers)
+    if not data:
+        return None
+    rl = data.get("rate_limit") or {}
+    quotas: list[Quota] = []
+    api_map = [
+        ("primary_window",   "five_hour", "5小时额度"),
+        ("secondary_window", "weekly",    "7日额度"),
+    ]
+    for key, window, label in api_map:
+        entry = rl.get(key) or {}
+        used = entry.get("used_percent")
+        if used is None:
+            continue
+        resets_at = ""
+        ts = entry.get("reset_at")
+        if ts:
+            resets_at = _fmt_reset(datetime.fromtimestamp(ts, tz=timezone.utc))
+        quotas.append(Quota(
+            agent="codex", window=window, label=label,
+            used=float(used), limit=100.0, reset_at=resets_at,
+        ))
+    return quotas or None
+
+
 def collect_codex_quotas() -> list[Quota]:
     global _codex_quota_cache
     now = time.monotonic()
@@ -265,25 +395,14 @@ def collect_codex_quotas() -> list[Quota]:
         _codex_quota_cache = (now, cached)
         return cached
 
-    sessions = _codex_main_sessions()
-    if not sessions:
-        stale = (_codex_quota_cache[1] if _codex_quota_cache else None) or _file_cache_read("codex", ignore_ttl=True)
-        return stale or []
+    api_quotas = _codex_quotas_from_api()
+    if api_quotas:
+        _codex_quota_cache = (now, api_quotas)
+        _file_cache_write("codex", api_quotas)
+        return api_quotas
 
-    # Walk sessions newest-first until we find rate_limits
-    rate_limits: dict | None = None
-    for f in reversed(sessions):
-        try:
-            for line in f.open():
-                obj = json.loads(line)
-                if obj.get("type") == "event_msg":
-                    p = obj.get("payload", {})
-                    if p.get("type") == "token_count" and p.get("rate_limits"):
-                        rate_limits = p["rate_limits"]
-        except Exception:
-            continue
-        if rate_limits:
-            break
+    # Fallback: stale session-log snapshot (only if the API is unreachable).
+    rate_limits = _codex_latest_rate_limits()
 
     if not rate_limits:
         stale = (_codex_quota_cache[1] if _codex_quota_cache else None) or _file_cache_read("codex", ignore_ttl=True)
@@ -313,6 +432,12 @@ def collect_codex_quotas() -> list[Quota]:
 
 
 def collect_codex_task() -> Task | None:
+    sessions = _codex_main_sessions()
+    if sessions:
+        task = _codex_task_from_jsonl(sessions[-1])
+        if task is not None:
+            return task
+
     db_path = Path.home() / ".codex" / "state_5.sqlite"
     if not db_path.exists():
         return None
@@ -340,6 +465,40 @@ def collect_codex_task() -> Task | None:
     status = _codex_status_from_jsonl() or TaskStatus.IDLE
 
     name = str(first_msg).replace("\n", " ")[:50]
+    return Task(name=name, status=status)
+
+
+def _codex_task_from_jsonl(path: Path) -> Task | None:
+    last_user_text: str | None = None
+    last_task_event: str | None = None
+    try:
+        for line in path.open(encoding="utf-8"):
+            obj = json.loads(line)
+            if obj.get("type") != "event_msg":
+                continue
+            payload = obj.get("payload", {})
+            if not isinstance(payload, dict):
+                continue
+            payload_type = payload.get("type")
+            if payload_type == "user_message":
+                text = str(payload.get("message", "")).strip()
+                if text:
+                    last_user_text = text
+            elif payload_type in ("task_started", "task_complete"):
+                last_task_event = payload_type
+    except Exception:
+        return None
+
+    if not last_user_text:
+        return None
+
+    status = TaskStatus.IDLE
+    if last_task_event == "task_started":
+        status = TaskStatus.RUNNING
+    elif last_task_event == "task_complete":
+        status = TaskStatus.NEEDS_ACTION
+
+    name = last_user_text.replace("\n", " ")[:50]
     return Task(name=name, status=status)
 
 
@@ -373,13 +532,13 @@ def _codex_status_from_jsonl() -> TaskStatus | None:
 def collect() -> DisplayState:
     """Collect real-time quota and task data from Claude Code and Codex."""
     claude_quotas = collect_claude_quotas()
-    claude_task = collect_claude_task() or Task(name="等待任务", status=TaskStatus.IDLE)
+    claude_tasks = collect_claude_tasks() or [Task(name="等待任务", status=TaskStatus.IDLE)]
     codex_quotas = collect_codex_quotas()
     codex_task = collect_codex_task() or Task(name="等待任务", status=TaskStatus.IDLE)
 
     agents = [
         AgentState(agent="claude", label="Claude Code",
-                   tasks=[claude_task], quotas=claude_quotas),
+                   tasks=claude_tasks, quotas=claude_quotas),
         AgentState(agent="codex", label="Codex",
                    tasks=[codex_task], quotas=codex_quotas),
     ]

@@ -18,7 +18,7 @@ class TaskStatus(str, Enum):
 STATUS_LABELS = {
     TaskStatus.IDLE: "空闲",
     TaskStatus.THINKING: "思考中",
-    TaskStatus.NEEDS_ACTION: "需要操作",
+    TaskStatus.NEEDS_ACTION: "等待",
     TaskStatus.RUNNING: "执行中",
     TaskStatus.DONE: "任务完成",
     TaskStatus.FAILED: "任务失败",

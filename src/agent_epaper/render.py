@@ -18,7 +18,7 @@ STATUS_ICON = {
 STATUS_SHORT = {
     TaskStatus.IDLE.value: "空闲",
     TaskStatus.THINKING.value: "进行",
-    TaskStatus.NEEDS_ACTION.value: "待处理",
+    TaskStatus.NEEDS_ACTION.value: "等待",
     TaskStatus.RUNNING.value: "进行",
     TaskStatus.DONE.value: "完成",
     TaskStatus.FAILED.value: "失败",

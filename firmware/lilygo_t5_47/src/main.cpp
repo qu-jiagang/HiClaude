@@ -11,6 +11,8 @@
 #include <U8g2_for_Adafruit_GFX.h>
 #include <WiFi.h>
 #include <Wire.h>
+#include <driver/gpio.h>
+#include <esp_sleep.h>
 #include <time.h>
 #include "utilities.h"
 #include <TouchDrvGT911.hpp>
@@ -35,27 +37,65 @@
 #define NTP_TIMEZONE_OFFSET (8 * 3600)  // UTC+8; override in config_private.h
 #endif
 
+#ifndef STATE_REFRESH_INTERVAL_MS
+#define STATE_REFRESH_INTERVAL_MS (5UL * 60UL * 1000UL)
+#endif
+
+#ifndef LIGHT_SLEEP_IDLE_MS
+#define LIGHT_SLEEP_IDLE_MS 200UL
+#endif
+
+#ifndef ENABLE_LIGHT_SLEEP
+#define ENABLE_LIGHT_SLEEP 1
+#endif
+
+#ifndef FIRMWARE_LABEL
+#define FIRMWARE_LABEL "local"
+#endif
+
+// Do a flashing full clear+grayscale refresh every N partial updates to
+// clear accumulated ghosting. Lower = crisper but flashes more often.
+#ifndef FULL_REFRESH_EVERY
+#define FULL_REFRESH_EVERY 12
+#endif
+
 namespace {
 
 constexpr uint8_t BLACK = 0;
 constexpr uint8_t DARK_GRAY = 80;
 constexpr uint8_t LIGHT_GRAY = 210;
 constexpr uint8_t WHITE = 255;
-constexpr uint32_t REFRESH_INTERVAL_MS = 60000;
+constexpr uint32_t REFRESH_INTERVAL_MS = STATE_REFRESH_INTERVAL_MS;
 constexpr uint32_t WIFI_TIMEOUT_MS = 20000;
+constexpr uint32_t LIGHT_SLEEP_MIN_MS = LIGHT_SLEEP_IDLE_MS;
 
 // Header touch zone X boundaries
 constexpr int32_t ZONE_BRAND_X  = 195;  // brand | agent-0
 constexpr int32_t ZONE_AGENT0_X = 500;  // agent-0 | agent-1
 constexpr int32_t ZONE_AGENT1_X = 770;  // agent-1 | clock
 constexpr int32_t HEADER_BOTTOM = 82;
+constexpr int32_t TASK_TITLE_X_OFFSET = 92;
+constexpr int32_t TASK_TITLE_RIGHT_PADDING = 24;
+
+constexpr uint32_t FRAMEBUFFER_SIZE = EPD_WIDTH * EPD_HEIGHT / 2;
+constexpr int32_t ROW_BYTES = EPD_WIDTH / 2;
 
 uint8_t *framebuffer = nullptr;
+uint8_t *prev_framebuffer = nullptr;  // last frame pushed to the panel
+bool prev_valid = false;
+bool force_full_refresh = true;       // boot / mode switch / resync
+uint16_t partial_since_full = 0;
 uint32_t last_refresh_ms = 0;
 bool touch_active = false;
 uint8_t text_scale = 1;
 int16_t text_scale_origin_x = 0;
 int16_t text_scale_origin_y = 0;
+bool clip_enabled = false;
+int16_t clip_x0 = 0;
+int16_t clip_y0 = 0;
+int16_t clip_x1 = EPD_WIDTH;
+int16_t clip_y1 = EPD_HEIGHT;
+bool time_synced = false;
 
 enum ViewMode { OVERVIEW, AGENT0_FULL, AGENT1_FULL };
 ViewMode current_mode = OVERVIEW;
@@ -76,6 +116,9 @@ class EpdFramebufferCanvas : public Adafruit_GFX {
     }
     const uint8_t ink = color ? BLACK : WHITE;
     if (text_scale <= 1) {
+      if (clip_enabled && (x < clip_x0 || x >= clip_x1 || y < clip_y0 || y >= clip_y1)) {
+        return;
+      }
       epd_draw_pixel(x, y, ink, framebuffer);
       return;
     }
@@ -87,6 +130,9 @@ class EpdFramebufferCanvas : public Adafruit_GFX {
         const int16_t px = sx + dx;
         const int16_t py = sy + dy;
         if (px >= 0 && py >= 0 && px < EPD_WIDTH && py < EPD_HEIGHT) {
+          if (clip_enabled && (px < clip_x0 || px >= clip_x1 || py < clip_y0 || py >= clip_y1)) {
+            continue;
+          }
           epd_draw_pixel(px, py, ink, framebuffer);
         }
       }
@@ -207,6 +253,18 @@ void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t color = BLACK)
   epd_draw_line(x0, y0, x1, y1, color, framebuffer);
 }
 
+void setClip(int16_t x, int16_t y, int16_t w, int16_t h) {
+  clip_enabled = true;
+  clip_x0 = max<int16_t>(0, x);
+  clip_y0 = max<int16_t>(0, y);
+  clip_x1 = min<int16_t>(EPD_WIDTH, x + w);
+  clip_y1 = min<int16_t>(EPD_HEIGHT, y + h);
+}
+
+void clearClip() {
+  clip_enabled = false;
+}
+
 String ellipsize(const String &value, size_t max_len) {
   if (value.length() <= max_len) {
     return value;
@@ -247,12 +305,58 @@ String ellipsizeUtf8(const String &value, size_t max_chars) {
   return value;
 }
 
+int32_t textDisplayWidth(const String &value) {
+  return u8g2.getUTF8Width(value.c_str()) + 1;
+}
+
+String ellipsizeUtf8ToWidth(const String &value, int32_t max_width) {
+  if (max_width <= 0 || textDisplayWidth(value) <= max_width) {
+    return value;
+  }
+
+  const String suffix = "...";
+  const int32_t suffix_width = textDisplayWidth(suffix);
+  if (suffix_width >= max_width) {
+    return suffix;
+  }
+
+  size_t end = 0;
+  String best;
+  for (size_t i = 0; i < value.length();) {
+    const uint8_t c = static_cast<uint8_t>(value[i]);
+    size_t step = 1;
+    if ((c & 0x80) == 0) {
+      step = 1;
+    } else if ((c & 0xE0) == 0xC0) {
+      step = 2;
+    } else if ((c & 0xF0) == 0xE0) {
+      step = 3;
+    } else if ((c & 0xF8) == 0xF0) {
+      step = 4;
+    }
+
+    if (i + step > value.length()) {
+      break;
+    }
+    i += step;
+    end = i;
+
+    const String candidate = value.substring(0, end);
+    if (textDisplayWidth(candidate) + suffix_width > max_width) {
+      break;
+    }
+    best = candidate;
+  }
+
+  return best.length() ? best + suffix : suffix;
+}
+
 String taskStatusShort(const String &status) {
   if (status == "running" || status == "thinking") {
     return "进行";
   }
   if (status == "needs_action") {
-    return "待处理";
+    return "等待";
   }
   if (status == "done") {
     return "完成";
@@ -265,7 +369,7 @@ String taskStatusShort(const String &status) {
 
 String englishStatus(const String &status) {
   if (status == "thinking")     return "Thinking";
-  if (status == "needs_action") return "Needs action";
+  if (status == "needs_action") return "Waiting";
   if (status == "running")      return "Running";
   if (status == "done")         return "Done";
   if (status == "failed")       return "Failed";
@@ -275,7 +379,7 @@ String englishStatus(const String &status) {
 String displayStatus(const DisplayView &view) {
   if (view.status_label.length()) return view.status_label;
   if (view.status == "thinking")     return "思考中";
-  if (view.status == "needs_action") return "待处理";
+  if (view.status == "needs_action") return "等待";
   if (view.status == "running")      return "运行中";
   if (view.status == "done")         return "已完成";
   if (view.status == "failed")       return "失败";
@@ -361,25 +465,49 @@ void drawHeader(const DisplayView &view, ViewMode mode) {
 }
 
 void drawTaskItem(int32_t x, int32_t y, int32_t w, const String &status, const String &name,
-                  bool separator, size_t max_title_chars = 7) {
+                  bool separator, size_t max_title_chars = 7, int32_t max_title_width = 0) {
   setFontSmall();
-  textAtBold(taskStatusShort(status), x + 4, y + 40, true);
+  const String status_text = taskStatusShort(status);
+  textAtBold(status_text, x + 4, y + 40, true);
 
   const String title = name.length() ? name : "等待任务";
   setFontLarge();
-  textAtBold(ellipsizeUtf8(title, max_title_chars), x + 92, y + 40, true);
+  if (max_title_width <= 0) {
+    max_title_width = w - TASK_TITLE_X_OFFSET - TASK_TITLE_RIGHT_PADDING;
+  }
+  const String visible_title = max_title_width > 0
+      ? ellipsizeUtf8ToWidth(title, max_title_width)
+      : ellipsizeUtf8(title, max_title_chars);
+  setClip(x + TASK_TITLE_X_OFFSET, y, max_title_width, 58);
+  textAtBold(visible_title, x + TASK_TITLE_X_OFFSET, y + 40, true);
+  clearClip();
   if (separator) {
-    line(x + 92, y + 58, x + w - 8, y + 58);
+    line(x + TASK_TITLE_X_OFFSET, y + 58, x + w - 8, y + 58);
   }
 }
 
-// Full-screen tasks-only view: shows up to 5 tasks, no quotas
+// Full-screen detail view: 5-hour quota bar in the header + up to 5 tasks
 void drawAgentTasksFull(int32_t x, int32_t y, int32_t w, int32_t h, const AgentView *agent) {
   rect(x, y, w, h, BLACK);
 
   const String label = agent ? agent->label : "Agent";
   setFontLarge();
-  textAtBold(ellipsizeUtf8(label, 20), x + 22, y + 52, true);
+  textAtBold(ellipsizeUtf8(label, 12), x + 22, y + 52, true);
+
+  // 5-hour quota bar in the empty header space right of the title.
+  // quotas[0] is five_hour (collector emits it first; same as drawAgentColumn).
+  if (agent && agent->quota_count > 0) {
+    const QuotaView &q = agent->quotas[0];
+    const int32_t bar_right = x + w - 24;
+    const int32_t bar_left = bar_right - 380;
+    setFontSmall();
+    textAt(ellipsizeUtf8(q.label.length() ? q.label : "5小时额度", 6),
+           bar_left, y + 38);
+    String info = String(q.percent) + "%";
+    if (q.reset.length()) info += "  重置 " + q.reset;
+    textAtRight(info, bar_right, y + 38, true);
+    drawBar(bar_left, y + 48, bar_right - bar_left, 18, q.percent);
+  }
 
   line(x + 22, y + 76, x + w - 22, y + 76);
 
@@ -389,7 +517,7 @@ void drawAgentTasksFull(int32_t x, int32_t y, int32_t w, int32_t h, const AgentV
   for (size_t i = 0; i < MAX_TASKS && i < count; ++i) {
     const int32_t row_y = y + 86 + static_cast<int32_t>(i) * ROW_H;
     const bool sep = (i + 1 < count && i + 1 < MAX_TASKS);
-    drawTaskItem(x + 22, row_y, w - 44, agent->tasks[i].status, agent->tasks[i].name, sep, 22);
+    drawTaskItem(x + 22, row_y, w - 44, agent->tasks[i].status, agent->tasks[i].name, sep, 24);
   }
   if (count == 0) {
     setFontSmall();
@@ -438,6 +566,64 @@ void drawAgentColumn(int32_t x, int32_t y, int32_t w, int32_t h, const AgentView
   }
 }
 
+// Push framebuffer to the panel. Does a quiet partial update of just the
+// rows that changed since the last frame; periodically (or when forced) does
+// a flashing full refresh to clear e-paper ghosting.
+void presentFramebuffer() {
+  const bool can_partial = prev_framebuffer && prev_valid &&
+                           !force_full_refresh &&
+                           partial_since_full < FULL_REFRESH_EVERY;
+
+  if (!can_partial) {
+    epd_poweron();
+    epd_clear();
+    epd_draw_grayscale_image(epd_full_screen(), framebuffer);
+    epd_poweroff();
+    if (prev_framebuffer) {
+      memcpy(prev_framebuffer, framebuffer, FRAMEBUFFER_SIZE);
+      prev_valid = true;
+    }
+    partial_since_full = 0;
+    force_full_refresh = false;
+    return;
+  }
+
+  // Full-width changed-row band: rows are contiguous in the framebuffer, so
+  // no per-pixel cropping is needed.
+  int32_t y0 = -1, y1 = -1;
+  for (int32_t row = 0; row < EPD_HEIGHT; ++row) {
+    const int32_t off = row * ROW_BYTES;
+    if (memcmp(framebuffer + off, prev_framebuffer + off, ROW_BYTES) != 0) {
+      if (y0 < 0) y0 = row;
+      y1 = row;
+    }
+  }
+  if (y0 < 0) {
+    Serial.println("Present: no change, skip");
+    return;
+  }
+  y1 += 1;
+  y0 &= ~1;                       // align band to even rows
+  if (y1 & 1) y1 += 1;
+  if (y1 > EPD_HEIGHT) y1 = EPD_HEIGHT;
+  const int32_t h = y1 - y0;
+
+  Rect_t band = {0, y0, EPD_WIDTH, h};
+  uint8_t *prev_band = prev_framebuffer + y0 * ROW_BYTES;
+  uint8_t *new_band = framebuffer + y0 * ROW_BYTES;
+
+  epd_poweron();
+  epd_draw_image(band, prev_band, WHITE_ON_WHITE);  // erase old ink
+  epd_draw_image(band, new_band, BLACK_ON_WHITE);   // draw new ink
+  epd_poweroff();
+
+  memcpy(prev_band, new_band, static_cast<size_t>(h) * ROW_BYTES);
+  partial_since_full++;
+  Serial.printf("Present: partial rows %d..%d (%u/%d)\n",
+                static_cast<int>(y0), static_cast<int>(y1),
+                static_cast<unsigned>(partial_since_full), FULL_REFRESH_EVERY);
+}
+
 void drawBootScreen(const String &line1, const String &line2 = "") {
   clearFramebuffer();
   rect(12, 12, EPD_WIDTH - 24, EPD_HEIGHT - 24, BLACK);
@@ -449,9 +635,14 @@ void drawBootScreen(const String &line1, const String &line2 = "") {
   if (line2.length()) {
     textAt(line2, 32, 214);
   }
+  setFontSmall();
+  textAt(FIRMWARE_LABEL, 32, 504);
   epd_poweron();
   epd_draw_grayscale_image(epd_full_screen(), framebuffer);
   epd_poweroff();
+  // Boot screen bypasses presentFramebuffer(); next drawState must full-refresh
+  // to resync the prev-frame cache.
+  force_full_refresh = true;
 }
 
 void drawState(const DisplayView &view, ViewMode mode = OVERVIEW) {
@@ -484,12 +675,15 @@ void drawState(const DisplayView &view, ViewMode mode = OVERVIEW) {
   if (view.updated_at.length()) {
     textAt("updated " + ellipsize(view.updated_at.substring(0, 19), 22), safe_x, 524);
   }
+  textAt(FIRMWARE_LABEL, right - 310, 524);
   textAt("4.7in / 960x540", right - 170, 524);
 
-  epd_poweron();
-  epd_clear();
-  epd_draw_grayscale_image(epd_full_screen(), framebuffer);
-  epd_poweroff();
+  Serial.printf("Drawing state mode=%d agents=%u updated=%s firmware=%s\n",
+                static_cast<int>(mode),
+                static_cast<unsigned>(view.agent_count),
+                view.updated_at.c_str(),
+                FIRMWARE_LABEL);
+  presentFramebuffer();
 }
 
 void handleTouch(const DisplayView &view) {
@@ -518,13 +712,16 @@ void handleTouch(const DisplayView &view) {
     last_refresh_ms = 0;  // force data refresh
   } else if (tx >= ZONE_AGENT0_X) {
     current_mode = (current_mode == AGENT1_FULL) ? OVERVIEW : AGENT1_FULL;
+    force_full_refresh = true;
     if (view_valid) drawState(view, current_mode);
   } else if (tx >= ZONE_BRAND_X) {
     current_mode = (current_mode == AGENT0_FULL) ? OVERVIEW : AGENT0_FULL;
+    force_full_refresh = true;
     if (view_valid) drawState(view, current_mode);
   } else {
     if (current_mode != OVERVIEW) {
       current_mode = OVERVIEW;
+      force_full_refresh = true;
       if (view_valid) drawState(view, current_mode);
     }
   }
@@ -593,6 +790,15 @@ bool connectWiFi() {
   Serial.print("Wi-Fi connected. IP: ");
   Serial.println(WiFi.localIP());
   return true;
+}
+
+void stopWiFi() {
+  if (WiFi.getMode() == WIFI_OFF) {
+    return;
+  }
+  WiFi.disconnect(true);
+  WiFi.mode(WIFI_OFF);
+  Serial.println("Wi-Fi off");
 }
 
 bool fetchState(DisplayView &view) {
@@ -744,7 +950,68 @@ bool fetchState(DisplayView &view) {
     }
   }
 
+  Serial.printf("Fetched state: agents=%u tasks=%u updated=%s\n",
+                static_cast<unsigned>(view.agent_count),
+                static_cast<unsigned>(view.task_total_count),
+                view.updated_at.c_str());
   return true;
+}
+
+bool refreshState() {
+  if (!connectWiFi()) {
+    stopWiFi();
+    return false;
+  }
+
+  if (!time_synced) {
+    syncNTP();
+    time_synced = true;
+  }
+
+  const bool ok = fetchState(g_view);
+  stopWiFi();
+  return ok;
+}
+
+void configureTouchWake() {
+  pinMode(TOUCH_INT, INPUT_PULLUP);
+  gpio_wakeup_enable(static_cast<gpio_num_t>(TOUCH_INT), GPIO_INTR_LOW_LEVEL);
+  esp_sleep_enable_gpio_wakeup();
+}
+
+void sleepUntilTouchOrRefresh() {
+#if ENABLE_LIGHT_SLEEP
+  if (last_refresh_ms == 0) {
+    delay(20);
+    return;
+  }
+
+  const uint32_t elapsed_ms = millis() - last_refresh_ms;
+  if (elapsed_ms >= REFRESH_INTERVAL_MS) {
+    delay(20);
+    return;
+  }
+
+  const uint32_t sleep_ms = max(REFRESH_INTERVAL_MS - elapsed_ms, LIGHT_SLEEP_MIN_MS);
+  esp_sleep_disable_wakeup_source(ESP_SLEEP_WAKEUP_ALL);
+  configureTouchWake();
+  esp_sleep_enable_timer_wakeup(static_cast<uint64_t>(sleep_ms) * 1000ULL);
+  Serial.printf("Light sleep up to %lu ms\n", static_cast<unsigned long>(sleep_ms));
+  Serial.flush();
+  esp_light_sleep_start();
+  gpio_wakeup_disable(static_cast<gpio_num_t>(TOUCH_INT));
+
+  const esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+  if (cause == ESP_SLEEP_WAKEUP_GPIO) {
+    Serial.println("Wake: touch");
+  } else if (cause == ESP_SLEEP_WAKEUP_TIMER) {
+    Serial.println("Wake: timer");
+  } else {
+    Serial.printf("Wake: cause %d\n", static_cast<int>(cause));
+  }
+#else
+  delay(100);
+#endif
 }
 
 }  // namespace
@@ -752,14 +1019,20 @@ bool fetchState(DisplayView &view) {
 void setup() {
   Serial.begin(115200);
   delay(1000);
-  Serial.println("hiClaude LilyGo T5-ePaper-S3 firmware");
+  Serial.printf("hiClaude LilyGo T5-ePaper-S3 firmware %s\n", FIRMWARE_LABEL);
 
-  framebuffer = static_cast<uint8_t *>(ps_calloc(EPD_WIDTH * EPD_HEIGHT / 2, sizeof(uint8_t)));
+  framebuffer = static_cast<uint8_t *>(ps_calloc(FRAMEBUFFER_SIZE, sizeof(uint8_t)));
   if (!framebuffer) {
     Serial.println("PSRAM framebuffer allocation failed");
     while (true) {
       delay(1000);
     }
+  }
+
+  // Optional: without it, presentFramebuffer() falls back to full refresh.
+  prev_framebuffer = static_cast<uint8_t *>(ps_calloc(FRAMEBUFFER_SIZE, sizeof(uint8_t)));
+  if (!prev_framebuffer) {
+    Serial.println("PSRAM prev-framebuffer alloc failed; partial refresh disabled");
   }
 
   epd_init();
@@ -773,26 +1046,19 @@ void setup() {
   epd_poweroff();
 
   Wire.begin(BOARD_SDA, BOARD_SCL);
+  pinMode(TOUCH_INT, INPUT_PULLUP);
   touch_ctrl.setPins(-1, TOUCH_INT);
   bool touch_ok = touch_ctrl.begin(Wire, GT911_SLAVE_ADDRESS_L)
                || touch_ctrl.begin(Wire, GT911_SLAVE_ADDRESS_H);
   Serial.println(touch_ok ? "Touch GT911 initialized" : "Touch init failed (non-fatal)");
-
-  if (connectWiFi()) {
-    syncNTP();
-    last_refresh_ms = 0;
-  }
+  last_refresh_ms = 0;
 }
 
 void loop() {
   handleTouch(g_view);
 
-  if (WiFi.status() != WL_CONNECTED) {
-    connectWiFi();
-  }
-
   if (millis() - last_refresh_ms >= REFRESH_INTERVAL_MS || last_refresh_ms == 0) {
-    if (fetchState(g_view)) {
+    if (refreshState()) {
       view_valid = true;
       drawState(g_view, current_mode);
     } else {
@@ -801,5 +1067,5 @@ void loop() {
     last_refresh_ms = millis();
   }
 
-  delay(100);  // reduced from 1000ms for touch responsiveness
+  sleepUntilTouchOrRefresh();
 }

@@ -21,7 +21,7 @@ SCREEN_MODULES = {
 STATUS_SHORT = {
     "idle": "空闲",
     "thinking": "进行",
-    "needs_action": "待处理",
+    "needs_action": "等待",
     "running": "进行",
     "done": "完成",
     "failed": "失败",

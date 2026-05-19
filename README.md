@@ -98,6 +98,12 @@ PYTHONPATH=src python3 -m agent_epaper.cli --state .agent-epaper-demo/state.json
 PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 18765 --state .agent-epaper-demo/state.json
 ```
 
+启动实时采集状态服务：
+
+```bash
+PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 18765 --collect
+```
+
 浏览器打开：
 
 ```text
@@ -107,6 +113,109 @@ http://127.0.0.1:18765/screen.svg
 ```
 
 说明：本机 `8765` 端口已经被其他 Node 服务占用，所以这里使用 `18765`。如果你机器上 `18765` 也被占用，可以换成其他端口，但固件里的 `STATE_URL` 也要同步改。
+
+`--state` 模式读取一个固定 JSON 文件，适合演示和手动写状态；`--collect` 模式会在每次 HTTP 请求时从本机 Claude Code / Codex 会话和额度缓存实时生成状态，适合实机长期运行。
+
+## Claude Code / Codex 采集原理
+
+实时采集入口是 `src/agent_epaper/collector.py`。HTTP 服务使用 `--collect` 时，每次访问 `/state.json` 都会调用 `collect()`，分别生成 `claude_code` 和 `codex` 两组数据：
+
+```json
+{
+  "claude_code": {
+    "label": "Claude Code",
+    "quota": {},
+    "tasks": []
+  },
+  "codex": {
+    "label": "Codex",
+    "quota": {},
+    "tasks": []
+  }
+}
+```
+
+### Claude Code 任务
+
+Claude Code 的任务来自本机 Claude transcript，而不是网络 API。
+
+采集步骤：
+
+1. 扫描 `~/.claude/sessions/*.json`。
+2. 读取每个 session 的 `pid` 和 `sessionId`。
+3. 用 `os.kill(pid, 0)` 判断进程是否还存在。
+4. 在 `~/.claude/projects/**/{sessionId}.jsonl` 中找到对应 transcript。
+5. 如果有多个活跃 transcript，选择最近修改的那个。
+6. 倒序读取 JSONL，找到最新一条真正的用户文本作为任务名。
+
+Claude transcript 中会混入一些不是人类任务的 `user` 记录，例如工具结果和内部 meta prompt。采集器会跳过：
+
+- `isMeta: true` 的内部提示，例如 `/loop` 展开的系统文本。
+- `message.content` 里只有 `tool_result` 的工具返回。
+- 没有可显示文本的记录。
+
+状态判断：
+
+- 最新有效事件是 assistant，且 `stop_reason` 不是 `tool_use`，并且不是刚刚结束的 20 秒内响应，则标记为 `needs_action`。
+- 否则标记为 `running`。
+- 没有活跃 session 或解析失败时，显示 fallback：`等待任务` / `idle`。
+
+### Codex 任务
+
+Codex 的任务优先来自本机 Codex JSONL session。
+
+采集步骤：
+
+1. 扫描 `~/.codex/sessions/**/*.jsonl`。
+2. 读取每个 session 第一行，只保留 `payload.source == "vscode"` 的主会话，避免把 subagent 会话当主任务。
+3. 选择最近的主会话 JSONL。
+4. 顺序读取 `event_msg`：
+   - `payload.type == "user_message"` 时记录最近的用户消息。
+   - `payload.type == "task_started"` 时标记任务运行中。
+   - `payload.type == "task_complete"` 时标记等待用户操作。
+5. 用最近的 `user_message` 作为 Codex 任务名。
+
+状态判断：
+
+- 最近任务事件是 `task_started`：`running`。
+- 最近任务事件是 `task_complete`：`needs_action`。
+- 没有任务事件但有用户消息：`idle`。
+
+如果找不到可用 JSONL，会退回读取 `~/.codex/state_5.sqlite` 里的最新线程。但 SQLite 里只有 `first_user_message`，它通常是整条线程最早的用户消息，不适合表示当前任务，所以只是兜底。
+
+### 额度采集
+
+额度采集和任务采集是两条独立路径。
+
+Claude Code：
+
+- 从系统 keychain 的 `Claude Code-credentials` 读取 OAuth token。
+- 请求 `https://api.anthropic.com/api/oauth/usage`。
+- 映射：
+  - `five_hour` -> `five_hour` / `5小时额度`
+  - `seven_day` -> `weekly` / `7日额度`
+
+Codex：
+
+- 从 Codex session JSONL 里的 `token_count` 事件读取 `rate_limits`。
+- 映射：
+  - `primary` -> `five_hour` / `5小时额度`
+  - `secondary` -> `weekly` / `7日额度`
+
+额度结果会缓存 10 分钟：
+
+```text
+~/.agent-epaper/quota-cache.json
+```
+
+如果实时请求失败，会尽量使用内存缓存或文件缓存，避免屏幕突然清空额度。
+
+### 限制和注意事项
+
+- 这套逻辑依赖本机 Claude Code / Codex 的当前文件结构，属于本地集成，不是稳定公开协议。
+- Claude Code 的 PID 在沙箱、容器或不同命名空间中可能判断不一致；如果任务显示不对，优先检查 `~/.claude/sessions/*.json` 和对应 transcript 的修改时间。
+- Codex 任务名只显示最近用户消息的前 50 个字符，固件端也会继续做省略显示。
+- 实机要显示实时内容，必须启动 `--collect` 服务；如果用 `--state .agent-epaper-demo/state.json`，屏幕会一直显示 demo 或手动写入的静态状态。
 
 ## 更新显示状态
 
