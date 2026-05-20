@@ -1,0 +1,169 @@
+{
+  "task_id": "lilygo-eink-4p7-full-enclosure-v15",
+  "status": "success",
+  "description": "Compact LilyGo Screen-4.7-S3 flush side shell for a screen-to-PCB bonded stack, with PCB fixed by bottom screws through the rear cover.",
+  "units": "mm",
+  "parts": [
+    "main_body.step",
+    "rear_cover.step",
+    "buttons.step",
+    "battery_door.step"
+  ],
+  "key_dimensions": {
+    "screen": "120 x 66",
+    "outer_body": "123 x 69",
+    "enclosure_top_height": 15.2,
+    "screen_corner_radius": 1.2,
+    "outer_corner_radius": 1.5,
+    "battery_pocket_center": [0.0, 0.0],
+    "battery_pocket_clear_span": "x -25.8..25.8, y -41.3..41.3; centered and clear of the verified screw bosses",
+    "battery_door_design": "centered sliding removable rear battery door with two upper insertion tongues, matching receiver pockets, a lower snap tooth, flex relief slots, and a fingernail notch",
+    "battery_door_recess": "59.6 x 90.6 x 0.8 deep",
+    "battery_door_opening": "55.6 x 86.6 through opening",
+    "battery_door_panel": "58.9 x 89.9 x 0.7, exported separately as battery_door.step/battery_door.stl",
+    "battery_door_latching": "insert upper tongues first, press lower edge until the snap tooth catches; pry at the fingernail notch to flex the lower tongue and open",
+    "h716_side_reference": "Thingiverse 6897183 / H716 V2.4 case model",
+    "h716_frm_cutout_source": "h716_032n_frm.stl exact side-face boundary boxes",
+    "h716_left_side_cutouts": [
+      "long_side_slot: -X side, y -9.37..4.56, z 1.80..10.85",
+      "button_1: -X side, y 7.74..12.64, z 2.14..10.85",
+      "button_2: -X side, y 15.90..20.80, z 2.14..10.85",
+      "button_3: -X side, y 25.03..29.93, z 2.14..10.85"
+    ],
+    "h716_end_side_cutouts": [
+      "wide_end_opening: -Y side, x -20.88..10.19, z 1.80..9.91",
+      "small_end_notch: -Y side, x 19.77..24.51, z 1.80..9.91"
+    ],
+    "rear_vent_design": "perimeter rear-cover vents removed because the centered battery-door side bands are too narrow; vents now sit on the removable battery door",
+    "battery_door_vent_slots": [
+      "slot: x -13.2..-10.8, y -28.0..-20.0",
+      "slot: x -1.2..1.2, y -28.0..-20.0",
+      "slot: x 10.8..13.2, y -28.0..-20.0",
+      "slot: x -13.2..-10.8, y -16.0..-8.0",
+      "slot: x -1.2..1.2, y -16.0..-8.0",
+      "slot: x 10.8..13.2, y -16.0..-8.0",
+      "slot: x -13.2..-10.8, y -4.0..4.0",
+      "slot: x -1.2..1.2, y -4.0..4.0",
+      "slot: x 10.8..13.2, y -4.0..4.0",
+      "slot: x -13.2..-10.8, y 8.0..16.0",
+      "slot: x -1.2..1.2, y 8.0..16.0",
+      "slot: x 10.8..13.2, y 8.0..16.0",
+      "slot: x -13.2..-10.8, y 20.0..28.0",
+      "slot: x -1.2..1.2, y 20.0..28.0",
+      "slot: x 10.8..13.2, y 20.0..28.0"
+    ],
+    "button_insert": "separate three-button carrier exported as buttons.step/buttons.stl; retained by two main-body heat-stake posts through matching holes",
+    "button_heat_stake_mounting": "two 1.2 mm diameter posts grow from the inner side wall at the solid webs between the three button openings; the button strip has 1.55 mm clearance holes and is fixed by heat-melting the post tips after installation",
+    "adhesive_tape_thickness_assumption": 0.2,
+    "screen_board_stack_height_assumption": 8.2,
+    "bottom_screw_clearance": 2.4,
+    "bottom_screw_head_pocket": "4.6 diameter x 1.0 deep",
+    "verified_h716_v24_pcb_hole_reference": "PCB left-top origin, board_x along 120mm length, board_y along 66mm width",
+    "verified_h716_v24_pcb_hole_points": [
+      [5.0, 4.9],
+      [113.5, 4.9],
+      [5.0, 48.4],
+      [113.5, 58.9]
+    ],
+    "cad_mount_points": [
+      [-28.1, -55.0],
+      [-28.1, 53.5],
+      [15.4, -55.0],
+      [25.9, 53.5]
+    ]
+  },
+  "changes_from_v14": [
+    "Removed all screen snap latches and discrete support pads.",
+    "Kept the top as a flush side-wall opening so the bonded screen face can sit level with the shell edge.",
+    "Changed rear cover PCB mounts to through holes with bottom screw head pockets.",
+    "Retained the compact 123 x 69 mm footprint and constrained side connector windows."
+  ],
+  "changes_from_verified_h716_hole_update": [
+    "Replaced the previous symmetric PCB mount pattern with the verified H716 V2.4 mounting coordinates.",
+    "Converted PCB top-left coordinates into the centered CadQuery enclosure coordinate system."
+  ],
+  "changes_from_corner_and_battery_update": [
+    "Reduced the screen/opening corner radius to 1.2 mm and the outer enclosure radius to 1.5 mm to match the very small real board corner radius.",
+    "Moved the battery retaining pocket center from y=18.0 mm to y=5.0 mm so the battery area avoids the fixed screw/boss positions."
+  ],
+  "changes_from_h716_side_io_update": [
+    "Repositioned the three side-button openings, SD-card opening, and Type-C opening using the H716 V2.4 enclosure model as reference.",
+    "Removed the previous extra JST side opening.",
+    "Added a separate three-button insert with three proud caps, short stems, and an internal carrier strip."
+  ],
+  "changes_from_h716_side_io_verification": [
+    "Moved Type-C from the short +Y end to the same +X long side as the buttons.",
+    "Moved the SD-card opening to the +X long side before the three-button cluster.",
+    "Verified the long-side order as SD, three buttons, then Type-C."
+  ],
+  "changes_from_h716_frm_direct_cutout_update": [
+    "Replaced semantic SD/Type-C/Button guesses with cutout boxes transferred directly from h716_032n_frm.stl.",
+    "Added one long-side slot and three bottom-open button notches on the -X side.",
+    "Added one wide opening and one small notch on the -Y end side."
+  ],
+  "changes_from_rear_vent_update": [
+    "Added five rounded vertical through-slots on the left rear-cover area outside the battery pocket.",
+    "Added four short rounded horizontal through-slots near the upper and lower rear-cover edges for extra airflow.",
+    "Kept all rear ventilation slots clear of the battery retaining rails and verified PCB screw boss positions."
+  ],
+  "changes_from_centered_openable_battery_update": [
+    "Moved the battery pocket center to the enclosure center at x=0.0, y=0.0.",
+    "Changed the rear cover into a centered openable battery bay with an outside shallow recess and a through opening.",
+    "Added a separate removable battery_door part with a locating plug, small latch ribs, fingernail notch, and battery retaining rails on its inside face.",
+    "Moved the rear ventilation slots to the perimeter around the battery door."
+  ],
+  "changes_from_vent_position_correction": [
+    "Removed the narrow left/right perimeter vents that were squeezed beside the centered battery door.",
+    "Moved the ventilation pattern onto the removable battery door as a centered 3 x 5 rounded slot grille.",
+    "Kept the grille clear of the fingernail notch, latch ribs, and battery retaining rails."
+  ],
+  "changes_from_sliding_battery_door_update": [
+    "Replaced the previous friction-style battery door with a sliding snap design.",
+    "Added two upper insertion tongues on the battery door and matching receiver pockets in the rear cover.",
+    "Added a lower snap tooth, a matching receiver pocket, and two flex relief slots so the fingernail notch can release the latch."
+  ],
+  "changes_from_heat_staked_button_update": [
+    "Changed the side button strip from a glue-retained insert to a heat-staked insert.",
+    "Added two horizontal heat-stake posts to the main body inner side wall.",
+    "Added two matching clearance holes through the button carrier strip and slightly thickened the carrier for better heat-stake support."
+  ],
+  "changes_from_button_rear_cover_clearance_update": [
+    "Raised the internal button carrier and heat-stake posts by 0.75 mm so the button strip clears the rear-cover lip.",
+    "Verified rear_cover/button_bar and rear_cover/main_body intersections are zero after the adjustment."
+  ],
+  "changes_from_button_heat_stake_position_update": [
+    "Moved the two heat-stake posts from the button-strip end areas into the solid webs between the three button openings.",
+    "New heat-stake y positions are 14.27 mm and 22.92 mm, centered between button_1/button_2 and button_2/button_3 cutouts.",
+    "Kept rear_cover/button_bar and rear_cover/main_body intersections at zero after the adjustment."
+  ],
+  "changes_from_button_motion_clearance_update": [
+    "Added local motion-clearance pockets behind the three side button openings so button stems no longer intersect the main body.",
+    "Verified main_body/button_bar, rear_cover/button_bar, and rear_cover/main_body intersection volumes are all zero."
+  ],
+  "validation": {
+    "passed": true,
+    "tool": "skill/validate.py --stdin",
+    "metrics": {
+      "n_solids": 1,
+      "n_faces": 422,
+      "n_edges": 1215,
+      "volume": 20696.29040431797,
+      "surface_area": 31576.13093774155,
+      "sa_to_volume": 1.5256903687026766,
+      "bbox": [
+        -37.45,
+        -61.5,
+        -0.04999999999999999,
+        34.5,
+        61.5,
+        15.200000000000001
+      ],
+      "face_types": {
+        "PLANE": 298,
+        "CYLINDER": 124
+      }
+    }
+  },
+  "assembly_note": "Screen and PCB are assumed to be bonded first with thin 3M double-sided tape; the PCB screws define the stack position. Measure real stack height before printing if exact flushness is critical.",
+  "preview_note": "preview.png was generated directly from STL because the local FreeCAD AppImage could not mount without FUSE."
+}

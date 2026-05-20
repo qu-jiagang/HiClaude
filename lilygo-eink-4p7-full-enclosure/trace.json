@@ -1,0 +1,614 @@
+{
+  "attempts": [
+    {
+      "stage": "design_review",
+      "result": "adhesive-bonded screen/PCB stack is preferable to fragile small snap tabs"
+    },
+    {
+      "stage": "cad_edit",
+      "result": "removed snaps/support pads; added bottom screw through holes and head pockets"
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 126,
+        "n_edges": 336,
+        "volume": 21506.85333310446,
+        "surface_area": 28608.008749767716,
+        "sa_to_volume": 1.3301810500438385,
+        "bbox": [
+          -34.5,
+          -61.5,
+          0.0,
+          34.5,
+          61.5,
+          15.2
+        ],
+        "face_types": {
+          "PLANE": 92,
+          "CYLINDER": 34
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "exported shape/main_body/rear_cover STEP and STL"
+    },
+    {
+      "stage": "verified_h716_hole_update",
+      "result": "updated rear-cover PCB bosses to verified H716 V2.4 hole coordinates",
+      "source_points_pcb_left_top_mm": [
+        [5.0, 4.9],
+        [113.5, 4.9],
+        [5.0, 48.4],
+        [113.5, 58.9]
+      ],
+      "converted_cad_points_mm": [
+        [-28.1, -55.0],
+        [-28.1, 53.5],
+        [15.4, -55.0],
+        [25.9, 53.5]
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 122,
+        "n_edges": 318,
+        "volume": 21507.339585799215,
+        "surface_area": 28618.367057966178,
+        "sa_to_volume": 1.3306325937617225,
+        "bbox": [
+          -34.5,
+          -61.5,
+          0.0,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 88,
+          "CYLINDER": 34
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover STEP and STL after verified hole update"
+    },
+    {
+      "stage": "corner_and_battery_update",
+      "result": "reduced enclosure corner radii and moved battery pocket away from screw bosses",
+      "screen_corner_radius": 1.2,
+      "outer_corner_radius": 1.5,
+      "battery_pocket_center": [6.5, 5.0],
+      "battery_pocket_span": {
+        "x": [-19.3, 32.3],
+        "y": [-36.3, 46.3]
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 120,
+        "n_edges": 308,
+        "volume": 21866.32367129179,
+        "surface_area": 29079.83176209282,
+        "sa_to_volume": 1.3298912153336329,
+        "bbox": [
+          -34.5,
+          -61.5,
+          0.0,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 88,
+          "CYLINDER": 32
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover STEP and STL after corner and battery update"
+    },
+    {
+      "stage": "h716_side_io_update",
+      "result": "updated side IO openings and added a separate H716-style three-button insert",
+      "reference": "Thingiverse 6897183 H716 V2.4 enclosure model",
+      "typec_cutout": {
+        "edge": "+Y",
+        "center_x": 19.0,
+        "width": 12.0,
+        "height": 5.4
+      },
+      "sd_cutout": {
+        "edge": "+X",
+        "center_y": 39.5,
+        "length": 16.0,
+        "height": 3.5
+      },
+      "button_cutouts": {
+        "edge": "+X",
+        "centers_y": [10.5, 19.0, 27.5],
+        "length": 5.4,
+        "height": 5.2
+      },
+      "button_insert": "buttons.step/buttons.stl"
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 173,
+        "n_edges": 463,
+        "volume": 22168.727421291736,
+        "surface_area": 29527.945512092854,
+        "sa_to_volume": 1.3319639396049874,
+        "bbox": [
+          -34.5,
+          -61.5,
+          0.0,
+          37.45,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 141,
+          "CYLINDER": 32
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover and added buttons STEP/STL"
+    },
+    {
+      "stage": "h716_side_io_verification",
+      "result": "corrected SD and Type-C placement after re-checking the H716 model/photos and the board layout",
+      "root_cause": "Type-C had been mapped to the short +Y end, and the long-side slot near the button cluster had been assigned to SD instead of treating Type-C as the far-right long-side opening.",
+      "long_side_order": [
+        "SD y=-12.0..4.0",
+        "button y=7.8..13.2",
+        "button y=16.3..21.7",
+        "button y=24.8..30.2",
+        "Type-C y=41.5..53.5"
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 173,
+        "n_edges": 463,
+        "volume": 22172.375796291857,
+        "surface_area": 29520.584262092852,
+        "sa_to_volume": 1.3314127693537434,
+        "bbox": [
+          -34.5,
+          -61.5,
+          0.0,
+          37.45,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 141,
+          "CYLINDER": 32
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons STEP and STL after SD/Type-C verification"
+    },
+    {
+      "stage": "h716_frm_direct_cutout_update",
+      "result": "replaced semantic side IO guesses with cutouts transferred directly from h716_032n_frm.stl side-face boundary boxes",
+      "left_side_minus_x_cutouts": [
+        "long_side_slot y=-9.37..4.56 z=1.80..10.85",
+        "button_1 y=7.74..12.64 z=2.14..10.85",
+        "button_2 y=15.90..20.80 z=2.14..10.85",
+        "button_3 y=25.03..29.93 z=2.14..10.85"
+      ],
+      "end_side_minus_y_cutouts": [
+        "wide_end_opening x=-20.88..10.19 z=1.80..9.91",
+        "small_end_notch x=19.77..24.51 z=1.80..9.91"
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 170,
+        "n_edges": 472,
+        "volume": 22042.442542049517,
+        "surface_area": 29330.13632723935,
+        "sa_to_volume": 1.3306209723032,
+        "bbox": [
+          -37.45,
+          -61.5,
+          0.0,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 138,
+          "CYLINDER": 32
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons STEP and STL after direct frm cutout update"
+    },
+    {
+      "stage": "rear_vent_update",
+      "result": "added rear-cover ventilation through-slots while avoiding battery pocket, rails, and PCB screw bosses",
+      "slots_mm": [
+        {"width": 4.0, "length": 11.0, "center": [-27.0, -28.0]},
+        {"width": 4.0, "length": 11.0, "center": [-27.0, -14.0]},
+        {"width": 4.0, "length": 11.0, "center": [-27.0, 0.0]},
+        {"width": 4.0, "length": 11.0, "center": [-27.0, 14.0]},
+        {"width": 4.0, "length": 11.0, "center": [-27.0, 28.0]},
+        {"width": 11.0, "length": 3.2, "center": [-8.0, -48.0]},
+        {"width": 11.0, "length": 3.2, "center": [10.0, -48.0]},
+        {"width": 11.0, "length": 3.2, "center": [-8.0, 50.0]},
+        {"width": 11.0, "length": 3.2, "center": [10.0, 50.0]}
+      ],
+      "battery_pocket_span_mm": {
+        "x": [-19.3, 32.3],
+        "y": [-36.3, 46.3]
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 242,
+        "n_edges": 688,
+        "volume": 21437.228117740262,
+        "surface_area": 29082.866105953726,
+        "sa_to_volume": 1.3566523594478317,
+        "bbox": [
+          -37.45,
+          -61.5,
+          0.0,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 174,
+          "CYLINDER": 68
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons STEP and STL after rear ventilation update"
+    },
+    {
+      "stage": "centered_openable_battery_update",
+      "result": "centered the battery pocket and added a separate removable battery door",
+      "battery_pocket_center_mm": [0.0, 0.0],
+      "battery_pocket_span_mm": {
+        "x": [-25.8, 25.8],
+        "y": [-41.3, 41.3]
+      },
+      "battery_door": {
+        "recess_mm": [59.6, 90.6, 0.8],
+        "through_opening_mm": [55.6, 86.6],
+        "panel_mm": [58.9, 89.9, 0.7],
+        "features": [
+          "outside shallow seat in rear cover",
+          "center through opening",
+          "locating plug on removable door",
+          "two small latch ribs",
+          "fingernail notch",
+          "battery retaining rails moved to the removable door"
+        ]
+      },
+      "rear_vent_slots_mm": [
+        {"width": 2.0, "length": 9.0, "center": [-32.0, -24.0]},
+        {"width": 2.0, "length": 9.0, "center": [-32.0, 0.0]},
+        {"width": 2.0, "length": 9.0, "center": [-32.0, 24.0]},
+        {"width": 2.0, "length": 9.0, "center": [32.0, -24.0]},
+        {"width": 2.0, "length": 9.0, "center": [32.0, 0.0]},
+        {"width": 2.0, "length": 9.0, "center": [32.0, 24.0]},
+        {"width": 10.0, "length": 2.4, "center": [-10.0, -51.0]},
+        {"width": 10.0, "length": 2.4, "center": [10.0, -51.0]},
+        {"width": 10.0, "length": 2.4, "center": [-10.0, 51.0]},
+        {"width": 10.0, "length": 2.4, "center": [10.0, 51.0]}
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 324,
+        "n_edges": 940,
+        "volume": 20879.993255581525,
+        "surface_area": 31521.725660464675,
+        "sa_to_volume": 1.5096616782689076,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 232,
+          "CYLINDER": 92
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons and added battery_door STEP/STL"
+    },
+    {
+      "stage": "vent_position_correction",
+      "result": "moved vents from the narrow rear-cover perimeter to the removable battery door",
+      "root_cause": "After centering the battery door, the left and right rear-cover bands were only about 4.7 mm wide, so the perimeter vents were too close to the edge.",
+      "rear_cover_perimeter_vents": [],
+      "battery_door_vent_slots_mm": [
+        {"width": 2.4, "length": 8.0, "center": [-12.0, -24.0]},
+        {"width": 2.4, "length": 8.0, "center": [0.0, -24.0]},
+        {"width": 2.4, "length": 8.0, "center": [12.0, -24.0]},
+        {"width": 2.4, "length": 8.0, "center": [-12.0, -12.0]},
+        {"width": 2.4, "length": 8.0, "center": [0.0, -12.0]},
+        {"width": 2.4, "length": 8.0, "center": [12.0, -12.0]},
+        {"width": 2.4, "length": 8.0, "center": [-12.0, 0.0]},
+        {"width": 2.4, "length": 8.0, "center": [0.0, 0.0]},
+        {"width": 2.4, "length": 8.0, "center": [12.0, 0.0]},
+        {"width": 2.4, "length": 8.0, "center": [-12.0, 12.0]},
+        {"width": 2.4, "length": 8.0, "center": [0.0, 12.0]},
+        {"width": 2.4, "length": 8.0, "center": [12.0, 12.0]},
+        {"width": 2.4, "length": 8.0, "center": [-12.0, 24.0]},
+        {"width": 2.4, "length": 8.0, "center": [0.0, 24.0]},
+        {"width": 2.4, "length": 8.0, "center": [12.0, 24.0]}
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 358,
+        "n_edges": 1024,
+        "volume": 20783.884156785138,
+        "surface_area": 31370.79959307245,
+        "sa_to_volume": 1.5093809875201356,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 246,
+          "CYLINDER": 112
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after vent position correction"
+    },
+    {
+      "stage": "sliding_battery_door_update",
+      "result": "changed the battery door from a friction-fit locator into a sliding snap-open design",
+      "operation": "insert the two upper tongues first, press the lower edge until the snap tooth catches, then pry from the fingernail notch to flex the lower tongue and release",
+      "door_features": [
+        "two upper insertion tongues",
+        "matching upper receiver pockets cut into the rear cover",
+        "one lower snap tooth",
+        "matching lower snap receiver pocket cut into the rear cover",
+        "two flex relief slots around the lower release tongue",
+        "existing fingernail notch retained for opening"
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 402,
+        "n_edges": 1170,
+        "volume": 20685.238803029555,
+        "surface_area": 31458.804415441067,
+        "sa_to_volume": 1.5208335139371763,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 282,
+          "CYLINDER": 120
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after sliding battery door update"
+    },
+    {
+      "stage": "heat_staked_button_update",
+      "result": "changed button-strip retention from glue/friction to two heat-stake posts",
+      "button_mounting": {
+        "main_body_posts": "two horizontal 1.2 mm diameter heat-stake posts from the inner side wall",
+        "button_strip_holes": "two 1.55 mm clearance holes through the button carrier",
+        "assembly": "place the button strip over the posts from inside the shell, align three button caps with the side openings, then heat-melt the post tips to form plastic rivets"
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 426,
+        "n_edges": 1236,
+        "volume": 20697.870717787588,
+        "surface_area": 31477.354656294232,
+        "sa_to_volume": 1.520801588022426,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 302,
+          "CYLINDER": 124
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after heat-staked button update"
+    },
+    {
+      "stage": "button_rear_cover_clearance_update",
+      "result": "raised the internal button carrier and heat-stake posts to clear the rear-cover lip",
+      "root_cause": "The button carrier bottom was at z=2.49 mm while the rear-cover inner lip reached about z=2.80 mm, creating a small rear_cover/button_bar overlap.",
+      "change": "button_carrier_z_offset changed from -3.10 to -2.35",
+      "intersection_check": {
+        "rear_cover_vs_button_bar_volume": 0.0,
+        "rear_cover_vs_main_body_volume": 0.0
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 420,
+        "n_edges": 1215,
+        "volume": 20703.850066309842,
+        "surface_area": 31553.527679834617,
+        "sa_to_volume": 1.5240415468029214,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 296,
+          "CYLINDER": 124
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after button rear-cover clearance update"
+    },
+    {
+      "stage": "button_heat_stake_position_update",
+      "result": "moved heat-stake posts out of the button openings and into the solid webs between buttons",
+      "root_cause": "The previous heat-stake y positions landed inside button_1 and button_3 cutout ranges, making the posts visible/obstructive in the side openings.",
+      "button_cutout_y_ranges": {
+        "button_1": [7.736, 12.636],
+        "button_2": [15.904, 20.804],
+        "button_3": [25.032, 29.933]
+      },
+      "new_heat_stake_y_positions": [14.27, 22.918],
+      "intersection_check": {
+        "rear_cover_vs_button_bar_volume": 0.0,
+        "rear_cover_vs_main_body_volume": 0.0
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 416,
+        "n_edges": 1185,
+        "volume": 20703.846673406715,
+        "surface_area": 31553.10621117905,
+        "sa_to_volume": 1.5240214395379863,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 292,
+          "CYLINDER": 124
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after button heat-stake position update"
+    },
+    {
+      "stage": "button_motion_clearance_update",
+      "result": "added local clearance pockets so the three button stems no longer intersect the main body at the button openings",
+      "root_cause": "Each button stem overlapped the inner shell wall at the button opening by about 2.11 mm^3 even after the heat-stake positions were corrected.",
+      "intersection_check": {
+        "main_body_vs_button_bar_volume": 0.0,
+        "rear_cover_vs_button_bar_volume": 0.0,
+        "rear_cover_vs_main_body_volume": 0.0
+      }
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "n_solids": 1,
+        "n_faces": 422,
+        "n_edges": 1215,
+        "volume": 20696.29040431797,
+        "surface_area": 31576.13093774155,
+        "sa_to_volume": 1.5256903687026766,
+        "bbox": [
+          -37.45,
+          -61.5,
+          -0.04999999999999999,
+          34.5,
+          61.5,
+          15.200000000000001
+        ],
+        "face_types": {
+          "PLANE": 298,
+          "CYLINDER": 124
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after button motion clearance update"
+    }
+  ]
+}

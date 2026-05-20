@@ -19,7 +19,6 @@
     <a href="#section-5">5. 电脑和墨水屏如何交互</a>
     <a href="#section-6">6. 屏幕展示 UI</a>
     <a href="#section-7">7. ESP32 固件开发计划</a>
-    <a href="#section-8">8. 支架和外壳</a>
     <a href="#section-9">9. 验收标准</a>
     <a href="#section-10">10. 项目文件</a>
   </nav>
@@ -44,7 +43,7 @@
   <!-- ====== 0. 整体路线 ====== -->
   <section id="section-0">
     <h2>0. 整体路线</h2>
-    <img class="flow-image" src="assets/assembly-motion.svg" alt="USB 烧录、Wi-Fi 拉取、墨水屏刷新、支架安装的动态图示">
+
     <div class="visual-grid">
       <div class="visual-card">
         <strong>先买对硬件</strong>
@@ -108,14 +107,14 @@
     <div class="pulse-list" aria-label="到货检查重点">
       <div class="pulse-item">只接 USB-C，确认电脑能识别串口。</div>
       <div class="pulse-item">跑官方示例，确认屏幕完整刷新。</div>
-      <div class="pulse-item">拍照和量尺寸，最后再打印支架。</div>
+      <div class="pulse-item">拍照和量尺寸。</div>
     </div>
     <ul class="checklist">
       <li>屏幕无裂纹，排线无折痕。</li>
       <li>板子、电池连接器、按键齐全。</li>
       <li>不要装外壳、不要固定胶、不要焊接。</li>
       <li>USB-C 数据线接电脑，确认识别串口。</li>
-      <li>拍正反面照片，记录接口和孔位，后续调支架用。</li>
+      <li>拍正反面照片，记录接口和孔位。</li>
     </ul>
   </section>
 
@@ -288,55 +287,6 @@ PYTHONPATH=src python3 -m agent_epaper.cli quota \
     </div>
   </section>
 
-  <!-- ====== 8. 支架和外壳 ====== -->
-  <section id="section-8">
-    <h2>8. 支架和外壳</h2>
-    <img class="flow-image" src="assets/stand-enclosure-concept-refined.png" alt="墨水屏一体化支架和薄背壳效果图">
-    <p>目标直接做成桌面倾斜支架 + 薄背壳一体结构：正面像一个完整桌面摆件，背面只在必要区域开窗和留口。LilyGo T5-ePaper-S3 背面有 USB-C、TF 卡槽、JST-PH 2.0 电池座、按钮、ESP32-S3 模组和排针，Touch / Basic、V2.3 / V2.4 布局也会有差异，所以外壳必须用实物尺寸校准后再打印。</p>
-
-    <table>
-      <thead>
-        <tr><th>模块</th><th>设计要求</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>外观</td><td>横屏桌面摆件形态，约 70° 倾角，前方只露出屏幕和窄边框，背面结构尽量干净。</td></tr>
-        <tr><td>支撑</td><td>底座 + 前下托 + 后背壳共同受力，重心落在底座内，避免屏幕玻璃或排线承力。</td></tr>
-        <tr><td>背壳</td><td>薄背壳按实物外形包住 PCB 边缘，保留背面大开窗，避让 ESP32-S3、TF 卡槽、电池座、排针和高元件。</td></tr>
-        <tr><td>接口</td><td>USB-C、TF 卡槽、电池接口、按钮都做独立开口；USB-C 预留直插线和弯头线空间。</td></tr>
-        <tr><td>固定</td><td>优先使用实物螺丝孔固定；孔位不准前不依赖硬卡扣，允许先用 M2/M2.5 螺丝或热熔铜柱方案。</td></tr>
-      </tbody>
-    </table>
-
-    <pre><code>cad/lilygo_t5_47_desk_stand.py
-cad/lilygo_t5_47_desk_stand.step
-cad/lilygo_t5_47_mounted.step</code></pre>
-    <p>当前 CAD 已把桌面底座、前下托、倾斜背壳、背面大开窗、右侧非屏幕宽肩避让、USB-C/TF/按钮/JST-PH 开口合进同一个参数模型，并另有装配预览 STEP 展示墨水屏摆在支架上的状态；改 CadQuery 脚本顶部参数即可适配实际尺寸。</p>
-
-    <p>一体化支架/外壳原则：</p>
-    <ul>
-      <li>前框只压 PCB 或结构边，不夹紧屏幕玻璃，不碰 e-paper 排线。</li>
-      <li>背壳中间开大窗，给电池座、TF 卡槽、ESP32-S3 模组和背面元件留空间。</li>
-      <li>USB-C 一侧留横向和后向走线空间，避免直插线顶住支架。</li>
-      <li>电池接口附近预留插头高度和线缆弯折半径，不让电池线成为受力点。</li>
-      <li>按钮区域不要被前托或背靠遮住，方便复位、下载和日常唤醒。</li>
-      <li>如果买的是焊排针版本，排针高度要单独避让。</li>
-      <li>所有外露边倒圆角，底座加宽并保留防滑脚垫位置，避免桌面倾倒。</li>
-    </ul>
-
-    <p>到货后量的尺寸：</p>
-    <ul>
-      <li>整板宽高</li>
-      <li>屏幕可视区域</li>
-      <li>螺丝孔径和孔距</li>
-      <li>USB-C 位置和插线后所需空间</li>
-      <li>TF 卡槽位置和插卡空间</li>
-      <li>JST-PH 2.0 电池连接器位置、厚度和线缆出线方向</li>
-      <li>按键位置、按压方向和按压行程</li>
-      <li>ESP32-S3 模组、排针、背面元件和焊点的最高高度</li>
-      <li>是否为 Touch / Basic、V2.3 / V2.4，以及实际背面布局差异</li>
-    </ul>
-  </section>
-
   <!-- ====== 9. 验收标准 ====== -->
   <section id="section-9">
     <h2>9. 验收标准</h2>
@@ -347,7 +297,6 @@ cad/lilygo_t5_47_mounted.step</code></pre>
       <li>ESP32-S3 能连上 Wi-Fi，并访问电脑端状态接口。</li>
       <li>屏幕能显示 Claude Code / Codex 额度、各自任务队列状态和进度。</li>
       <li>断开 USB-C 后，电池供电能继续工作，或至少保留最后一屏。</li>
-      <li>支架能稳定放桌面，不遮挡 USB-C、电池连接器和按键。</li>
     </ul>
   </section>
 
@@ -362,12 +311,8 @@ cad/lilygo_t5_47_mounted.step</code></pre>
         <tr><td><code>src/agent_epaper/cli.py</code></td><td>更新任务状态和额度</td></tr>
         <tr><td><code>src/agent_epaper/server.py</code></td><td>电脑端 HTTP 服务</td></tr>
         <tr><td><code>src/agent_epaper/render.py</code></td><td>SVG 预览渲染</td></tr>
-        <tr><td><code>cad/lilygo_t5_47_desk_stand.py</code></td><td>桌面托架 CadQuery 参数模型</td></tr>
-        <tr><td><code>cad/lilygo_t5_47_desk_stand.step</code></td><td>可打印桌面支架 STEP</td></tr>
-        <tr><td><code>cad/lilygo_t5_47_mounted.step</code></td><td>墨水屏摆在支架上的展示 STEP</td></tr>
-        <tr><td><code>docs/assets/stand-enclosure-concept-refined.png</code></td><td>基于 LilyGo T5 4.7 参考图修订的一体化支架/外壳效果图</td></tr>
         <tr><td><code>docs/assets/hiclaude-epaper-task-queue.png</code></td><td>hiClaude 多任务墨水屏队列 UI 生图概念稿</td></tr>
-        <tr><td><code>docs/reference/lilygo_t5_47_reference.md</code></td><td>LilyGo T5 4.7 官方资料、图片和 CAD 参考</td></tr>
+        <tr><td><code>docs/reference/lilygo_t5_47_reference.md</code></td><td>LilyGo T5 4.7 官方资料和参考</td></tr>
         <tr><td><code>assets/*.svg</code></td><td>流程图和产品图示</td></tr>
       </tbody>
     </table>

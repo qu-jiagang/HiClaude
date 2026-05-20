@@ -110,7 +110,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
         Task(
             name="实现墨水屏桌面摆件",
             status=TaskStatus.THINKING,
-            detail="规划硬件、程序、支架和验证流程",
+            detail="规划硬件、程序和验证流程",
         ),
         Task(
             name="完善中文 README",

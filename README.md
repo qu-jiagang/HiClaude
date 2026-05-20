@@ -2,11 +2,10 @@
 
 这是一个给 Claude Code / Codex 任务状态和额度做桌面展示的电子墨水屏项目，目标硬件是 LilyGo `T5-ePaper-S3 4.7"`。
 
-项目目前包含三部分：
+项目目前包含两部分：
 
 - 电脑端 Python 状态服务：维护任务、额度、提示信息，并提供 `state.json`、`screen.svg` 和浏览器预览。
 - LilyGo 固件：连接 Wi-Fi，访问电脑端状态服务，解析 JSON，并刷新 960x540 墨水屏。
-- CAD 和文档：LilyGo T5 4.7 寸桌面支架/外壳参考资料。
 
 ## 硬件
 
@@ -42,8 +41,6 @@ http://192.168.31.127:18765/state.json
 
 - `docs/index.html`
 - `docs/reference/lilygo_t5_47_reference.md`
-- `cad/lilygo_t5_47_desk_stand.step`
-- `cad/lilygo_t5_47_mounted.step`
 
 ## 当前状态
 
@@ -430,7 +427,6 @@ Fetching http://192.168.31.127:18765/state.json
 ```text
 src/agent_epaper/       Python CLI、状态模型、HTTP 服务、渲染逻辑
 firmware/lilygo_t5_47/  LilyGo T5-ePaper-S3 固件
-cad/                    CadQuery 源文件和 STEP/STL 导出
 docs/                   本地实施指南、参考资料和图片
 tests/                  Python 单元测试
 ```
