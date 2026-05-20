@@ -43,6 +43,27 @@ def ellipsize_text(value: str, max_chars: int) -> str:
     return text[: max_chars - 3] + "..."
 
 
+def _glyph_w(ch: str, font_px: float) -> float:
+    # CJK / fullwidth glyphs are ~1em; Latin/ASCII ~0.56em.
+    return font_px * (1.0 if ord(ch) > 0x2E80 else 0.56)
+
+
+def ellipsize_to_width(value: str, max_px: float, font_px: float) -> str:
+    """Trim to fit a pixel width, mirroring firmware ellipsizeUtf8ToWidth()."""
+    text = str(value)
+    if sum(_glyph_w(c, font_px) for c in text) <= max_px:
+        return text
+    budget = max_px - sum(_glyph_w(c, font_px) for c in "...")
+    out, acc = "", 0.0
+    for ch in text:
+        cw = _glyph_w(ch, font_px)
+        if acc + cw > budget:
+            break
+        out += ch
+        acc += cw
+    return (out + "...") if out else "..."
+
+
 def _agent_status(agent) -> tuple[str, bool]:
     if agent and agent.tasks:
         st = agent.tasks[0].to_dict()["status"]
@@ -56,7 +77,7 @@ def _status_dot_svg(cx: int, cy: int, active: bool) -> str:
     return f'<circle cx="{cx}" cy="{cy}" r="7" fill="none" stroke="#000" stroke-width="1.5"/>'
 
 
-def _agent_column_svg(agent, x: int, y: int, w: int, max_title_chars: int = 9) -> str:
+def _agent_column_svg(agent, x: int, y: int, w: int) -> str:
     label = escape(ellipsize_text(agent.label, 13)) if agent else "Agent"
     quotas = [quota.to_dict() for quota in agent.quotas[:2]] if agent else []
 
@@ -86,7 +107,12 @@ def _agent_column_svg(agent, x: int, y: int, w: int, max_title_chars: int = 9) -
     for row_idx in range(3):
         row_task = tasks[row_idx] if row_idx < len(tasks) else None
         row_status = escape(STATUS_SHORT.get(row_task["status"], "等待")) if row_task else "等待"
-        row_title = escape(ellipsize_text(row_task["name"] or "等待任务", max_title_chars)) if row_task else "等待任务"
+        # Last row shares its baseline with the "+N 任务运行中" marker; reserve
+        # room for it so the title never overlaps the marker.
+        title_px = w - 144
+        if row_idx == 2 and extra_task_count > 0:
+            title_px -= 130
+        row_title = escape(ellipsize_to_width(row_task["name"] or "等待任务", title_px, 24)) if row_task else "等待任务"
         row_y = y + 202 + row_idx * 60
         separator = (
             f'<line x1="{x + 114}" y1="{row_y + 58}" x2="{x + w - 30}" y2="{row_y + 58}" class="taskline"/>'
@@ -114,17 +140,42 @@ def _agent_column_svg(agent, x: int, y: int, w: int, max_title_chars: int = 9) -
 
 
 def _agent_tasks_full_svg(agent, x: int, y: int, w: int) -> str:
-    """Full-screen tasks-only column: up to 5 tasks, no quotas."""
-    label = escape(ellipsize_text(agent.label, 20)) if agent else "Agent"
+    """Full-screen detail column: 5-hour quota bar in the header + 5 tasks.
+
+    Mirrors firmware drawAgentTasksFull() geometry so web == device.
+    """
+    label = escape(ellipsize_text(agent.label, 12)) if agent else "Agent"
     all_tasks = [t.to_dict() for t in agent.tasks] if agent else []
     tasks = all_tasks[:5]
+
+    # 5-hour quota bar in the empty header space right of the title.
+    # quotas[0] is five_hour (collector emits it first; same as overview).
+    quota_block = ""
+    quotas = [q.to_dict() for q in agent.quotas[:1]] if agent else []
+    if quotas:
+        q = quotas[0]
+        bar_right = x + w - 24
+        bar_left = bar_right - 380
+        bar_w = bar_right - bar_left
+        q_label = escape(ellipsize_text(q["label"] or "5小时额度", 6))
+        q_pct = clamp(int(q["percent"]), 0, 100)
+        info = f'{q_pct}%'
+        if q.get("reset_at"):
+            info += f'  重置 {escape(q["reset_at"])}'
+        fill_w = round((bar_w - 4) * q_pct / 100)
+        quota_block = (
+            f'<text x="{bar_left}" y="{y + 38}" class="quota ink">{q_label}</text>\n'
+            f'  <text x="{bar_right}" y="{y + 38}" text-anchor="end" class="quota bold ink">{info}</text>\n'
+            f'  <rect x="{bar_left}" y="{y + 48}" width="{bar_w}" height="18" class="bar"/>\n'
+            f'  <rect x="{bar_left + 2}" y="{y + 50}" width="{fill_w}" height="14" class="fill"/>'
+        )
 
     row_h = 58
     task_rows = []
     for i, task in enumerate(tasks):
         row_y = y + 86 + i * row_h
         row_status = escape(STATUS_SHORT.get(task["status"], "空闲"))
-        row_title = escape(ellipsize_text(task["name"] or "等待任务", 22))
+        row_title = escape(ellipsize_to_width(task["name"] or "等待任务", w - 144, 24))
         has_sep = i + 1 < len(tasks)
         separator = (
             f'<line x1="{x + 114}" y1="{row_y + 56}" x2="{x + w - 30}" y2="{row_y + 56}" class="taskline"/>'
@@ -144,6 +195,7 @@ def _agent_tasks_full_svg(agent, x: int, y: int, w: int) -> str:
     return (
         f'<rect x="{x}" y="{y}" width="{w}" height="380" class="hair"/>\n'
         f'  <text x="{x + 22}" y="{y + 52}" class="title ink">{label}</text>\n'
+        f'  {quota_block}\n'
         f'  <line x1="{x + 22}" y1="{y + 76}" x2="{x + w - 22}" y2="{y + 76}" class="line"/>\n'
         f'  {"  ".join(task_rows)}\n'
         f'  {empty}'
@@ -223,8 +275,8 @@ def render_svg(state: DisplayState, width: int = 960, height: int = 540,
     .fill {{ fill: #000; }}
     .brand {{ font: 700 32px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
     .title {{ font: 700 32px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
-    .tasktitle {{ font: 700 32px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
-    .status {{ font: 700 28px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
+    .tasktitle {{ font: 700 24px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
+    .status {{ font: 700 24px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
     .zone {{ font: 28px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
     .medium {{ font: 700 26px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
     .quota {{ font: 16px "Noto Sans CJK SC", "Heiti SC", sans-serif; }}
