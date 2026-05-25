@@ -1,11 +1,10 @@
 {
   "task_id": "lilygo-eink-4p7-full-enclosure-v15",
   "status": "success",
-  "description": "Compact LilyGo Screen-4.7-S3 flush side shell for a screen-to-PCB bonded stack, with PCB fixed by bottom screws through the rear cover.",
+  "description": "Compact LilyGo Screen-4.7-S3 flush enclosure body for a screen-to-PCB bonded stack, with the former rear cover fused into the main body and PCB fixed by bottom screws.",
   "units": "mm",
   "parts": [
     "main_body.step",
-    "rear_cover.step",
     "buttons.step",
     "battery_door.step"
   ],
@@ -20,19 +19,18 @@
     "battery_door_design": "centered sliding removable rear battery door with two upper insertion tongues, matching receiver pockets, a lower snap tooth, flex relief slots, and a fingernail notch",
     "battery_door_recess": "59.6 x 90.6 x 0.8 deep",
     "battery_door_opening": "55.6 x 86.6 through opening",
-    "battery_door_panel": "58.9 x 89.9 x 0.7, exported separately as battery_door.step/battery_door.stl",
+    "battery_door_panel": "58.9 x 89.9 x 0.7, exported separately as battery_door.step",
     "battery_door_latching": "insert upper tongues first, press lower edge until the snap tooth catches; pry at the fingernail notch to flex the lower tongue and open",
     "h716_side_reference": "Thingiverse 6897183 / H716 V2.4 case model",
     "h716_frm_cutout_source": "h716_032n_frm.stl exact side-face boundary boxes",
     "h716_left_side_cutouts": [
-      "long_side_slot: -X side, y -9.37..4.56, z 1.80..10.85",
-      "button_1: -X side, y 7.74..12.64, z 2.14..10.85",
-      "button_2: -X side, y 15.90..20.80, z 2.14..10.85",
-      "button_3: -X side, y 25.03..29.93, z 2.14..10.85"
+      "sd_slot: -X side, y -9.75..4.75, z 0.00..10.60",
+      "button_1: -X side, y 8.05..13.15, z 4.07..10.60",
+      "button_2: -X side, y 16.55..21.65, z 4.07..10.60",
+      "button_3: -X side, y 26.05..31.15, z 4.07..10.60"
     ],
     "h716_end_side_cutouts": [
-      "wide_end_opening: -Y side, x -20.88..10.19, z 1.80..9.91",
-      "small_end_notch: -Y side, x 19.77..24.51, z 1.80..9.91"
+      "wide_end_opening: +Y side, x -15.30..-0.70, z 3.80..12.60"
     ],
     "rear_vent_design": "perimeter rear-cover vents removed because the centered battery-door side bands are too narrow; vents now sit on the removable battery door",
     "battery_door_vent_slots": [
@@ -52,7 +50,7 @@
       "slot: x -1.2..1.2, y 20.0..28.0",
       "slot: x 10.8..13.2, y 20.0..28.0"
     ],
-    "button_insert": "separate three-button carrier exported as buttons.step/buttons.stl; retained by two main-body heat-stake posts through matching holes",
+    "button_insert": "separate three-button carrier exported as buttons.step; retained by two main-body heat-stake posts through matching holes",
     "button_heat_stake_mounting": "two 1.2 mm diameter posts grow from the inner side wall at the solid webs between the three button openings; the button strip has 1.55 mm clearance holes and is fixed by heat-melting the post tips after installation",
     "adhesive_tape_thickness_assumption": 0.2,
     "screen_board_stack_height_assumption": 8.2,
@@ -140,6 +138,56 @@
     "Added local motion-clearance pockets behind the three side button openings so button stems no longer intersect the main body.",
     "Verified main_body/button_bar, rear_cover/button_bar, and rear_cover/main_body intersection volumes are all zero."
   ],
+  "changes_from_fused_rear_cover_update": [
+    "Fused the former rear_cover geometry into main_body.step as one enclosure_body solid.",
+    "Removed rear_cover.step as a separate exported part.",
+    "Regenerated only STEP outputs in the project folder; no STL, FCStd, macro, or preview outputs are generated."
+  ],
+  "changes_from_side_opening_layout_update": [
+    "Kept the -X long side as SD_slot/long_side_slot followed by button_1, button_2, and button_3.",
+    "Moved the end opening to the +Y short side.",
+    "Removed small_end_notch from the generated enclosure."
+  ],
+  "changes_from_sd_slot_width_update": [
+    "Superseded by the source STL cutout update; the -X long-side slot now matches the downloaded h716_032n_frm.stl boundary instead of the temporary widened estimate."
+  ],
+  "changes_from_source_stl_cutout_update": [
+    "Replaced scaled/guessed side openings with direct boundary boxes extracted from /home/midea/Downloads/h716_032n_frm.stl.",
+    "Initially mapped the -X bottom-open long notch at source y -9.75..4.75 and z -2.55..8.05; this was later corrected because it is not the SD slot.",
+    "Set the -X button openings to source y ranges 8.05..13.15, 16.55..21.65, 26.05..31.15 and z 1.516..8.05.",
+    "Set the +Y short-side wide opening to source x -15.30..-0.70 and z 1.25..10.05.",
+    "Removed H716 opening coordinate scaling so source widths, heights, and positions are preserved in the current model coordinates."
+  ],
+  "changes_from_sd_slot_source_correction": [
+    "Corrected the -X SD slot to the source STL upper narrow slot instead of replacing the full long-side opening set.",
+    "Set SD slot source bounds to y -32.333..-16.933 and z 9.05..10.05, preserving the 15.40 x 1.00 mm source opening size.",
+    "Superseded by the complete source X-face restore because the source STL also includes the bottom-open long notch and the right upper narrow slot."
+  ],
+  "changes_from_complete_source_x_face_restore": [
+    "Superseded by final_x_side_slot_cleanup; this intermediate revision restored more -X source openings than the final requested generated model keeps.",
+    "Kept here only as history for the extraction/debugging sequence."
+  ],
+  "changes_from_sd_slot_semantic_fix": [
+    "Renamed the button-left source opening from bottom_open_long_notch to sd_slot.",
+    "Kept sd_slot at the wide source bounds y -9.75..4.75 and z -2.55..8.05, size 14.50 x 10.60 mm.",
+    "Kept the two upper 15.40 x 1.00 mm narrow slots separate so they are not treated as the SD opening."
+  ],
+  "changes_from_source_z_alignment_fix": [
+    "Changed H716 source z mapping so the source STL side-face bottom maps to current model z=0 instead of z=rear_cover_thickness.",
+    "Moved sd_slot from model z 1.80..12.40 to z 0.00..10.60 while preserving its 14.50 x 10.60 mm source size.",
+    "Regenerated comparison screenshots in /tmp/h716_xface_boundary_compare_after.png and /tmp/h716_3d_compare_after.png before final verification."
+  ],
+  "changes_from_final_x_side_slot_cleanup": [
+    "Removed the upper narrow slots at y -32.333..-16.933 and y 32.667..48.067 from the generated -X side.",
+    "Kept only the requested -X side openings: sd_slot at y -9.75..4.75 and button_1 through button_3.",
+    "Re-cut side and end openings after fusing rear_cover into main_body so the sd_slot is not blocked by the rear cover bottom plate.",
+    "Verified with /tmp/h716_xface_target_current_fixed.png and /tmp/h716_3d_current_fixed.png."
+  ],
+  "changes_from_side_cutter_axis_fix": [
+    "Fixed the side/end opening cutters to use global XYZ box dimensions instead of YZ/XZ workplane-local dimensions.",
+    "This restores sd_slot width along model Y to 14.50 mm instead of assigning that dimension to the wrong axis.",
+    "Verified with /tmp/h716_minus_x_ortho_axis_fixed.png, /tmp/h716_section_y0_axis_fixed.png, and /tmp/h716_current_axis_fixed_3d_views.png."
+  ],
   "validation": {
     "passed": true,
     "tool": "skill/validate.py --stdin",
@@ -165,5 +213,5 @@
     }
   },
   "assembly_note": "Screen and PCB are assumed to be bonded first with thin 3M double-sided tape; the PCB screws define the stack position. Measure real stack height before printing if exact flushness is critical.",
-  "preview_note": "preview.png was generated directly from STL because the local FreeCAD AppImage could not mount without FUSE."
+  "preview_note": "No preview/STL regeneration is performed for this revision; the project folder keeps STEP outputs only."
 }

@@ -2,8 +2,8 @@ import cadquery as cq
 
 # LilyGo Screen-4.7-S3 compact enclosure v15.
 # Assembly split:
-#   main_body = flush side shell, no screen snaps
-#   rear_cover = removable back plate with bottom screw access for PCB mounting
+#   enclosure_body = fused side shell and rear cover with bottom screw access
+#   battery_door/buttons = separate removable/service parts
 
 # Compact footprint driven directly by the user's measured 120 x 66 mm front.
 screen_width = 66.0
@@ -136,6 +136,7 @@ bat_pad_x = -1.0
 bat_pad_y = 4.0
 wire_channel_width = 3.2
 wire_channel_depth = 0.7
+side_opening_depth = 7.0
 
 # No front snap retention in this revision. Screen and PCB are first bonded as
 # one stack, then the PCB is screwed to the rear cover from below.
@@ -147,46 +148,42 @@ h716_frame_width = 76.0
 h716_frame_length = 128.0
 h716_frame_z_min = -2.55
 h716_frame_height = 15.7
-h716_x_scale = outer_width / h716_frame_width
-h716_y_scale = outer_length / h716_frame_length
-h716_z_scale = shell_height / h716_frame_height
 
 
 def h716_x(value):
-    return value * h716_x_scale
+    return value
 
 
 def h716_y(value):
-    return value * h716_y_scale
+    return value
 
 
 def h716_z(value):
-    return rear_cover_thickness + (value - h716_frame_z_min) * h716_z_scale
+    return value - h716_frame_z_min
 
 
 # Side features copied from the H716 frame. Some are bottom-open notches rather
 # than fully enclosed holes, so the cutter spans from the lower edge upward.
 h716_left_side_cutouts = [
     # name, local y min, local y max, local z min, local z max
-    ("long_side_slot", -9.75, 4.75, -2.55, 8.05),
-    ("button_1", 8.05, 13.15, -2.15, 8.05),
-    ("button_2", 16.55, 21.65, -2.15, 8.05),
-    ("button_3", 26.05, 31.15, -2.15, 8.05),
+    ("sd_slot", -9.75, 4.75, -2.55, 8.05),
+    ("button_1", 8.05, 13.15, 1.516, 8.05),
+    ("button_2", 16.55, 21.65, 1.516, 8.05),
+    ("button_3", 26.05, 31.15, 1.516, 8.05),
 ]
 h716_end_side_cutouts = [
     # name, local x min, local x max, local z min, local z max
-    ("wide_end_opening", -23.00, 11.22, -2.55, 6.95),
-    ("small_end_notch", 21.78, 27.00, -2.55, 6.95),
+    ("wide_end_opening", -15.30, -0.70, 1.25, 10.05),
 ]
 
 button_cut_length = h716_y(13.15 - 8.05)
-button_cut_height = h716_z(8.05) - h716_z(-2.15)
+button_cut_height = h716_z(8.05) - h716_z(1.516)
 button_y_positions = tuple(
     h716_y((y_min + y_max) / 2.0)
     for name, y_min, y_max, _z_min, _z_max in h716_left_side_cutouts
     if name.startswith("button")
 )
-button_cut_z = (h716_z(-2.15) + h716_z(8.05)) / 2.0
+button_cut_z = (h716_z(1.516) + h716_z(8.05)) / 2.0
 button_cap_depth = 3.2
 button_cap_length = 4.4
 button_cap_height = 4.2
@@ -238,8 +235,8 @@ def cut_centered_box(body, width, length, height, center):
 
 
 # ---------------------------------------------------------------------------
-# Main body: flush side shell only. The bonded screen/PCB stack is installed
-# from the front and fixed by screws through the rear cover PCB mounts.
+# Main side shell: flush side wall. The bonded screen/PCB stack is installed
+# from the front and fixed by screws through the rear-cover PCB mounts.
 # ---------------------------------------------------------------------------
 side_shell = rounded_box(outer_width, outer_length, shell_height, outer_radius).translate((0, 0, rear_cover_thickness))
 side_cavity = rounded_cutter(
@@ -254,8 +251,13 @@ main_body = side_shell.cut(side_cavity)
 front_z = rear_cover_thickness + shell_height
 
 # H716-derived side openings in main body.
+# Layout:
+#   -X long side: SD/long slot, then three button openings.
+#   +Y short side: one wide end opening.
 right_edge_x = outer_width / 2.0
 left_edge_x = -outer_width / 2.0
+side_opening_cutters = []
+end_opening_cutters = []
 
 for name, y_min, y_max, z_min, z_max in h716_left_side_cutouts:
     cut_center_y = h716_y((y_min + y_max) / 2.0)
@@ -263,10 +265,11 @@ for name, y_min, y_max, z_min, z_max in h716_left_side_cutouts:
     cut_center_z = (h716_z(z_min) + h716_z(z_max)) / 2.0
     cut_height = h716_z(z_max) - h716_z(z_min)
     side_cut = (
-        cq.Workplane("YZ")
-        .box(side_wall + 4.0, cut_length, cut_height, centered=True)
+        cq.Workplane("XY")
+        .box(side_opening_depth, cut_length, cut_height, centered=True)
         .translate((left_edge_x, cut_center_y, cut_center_z))
     )
+    side_opening_cutters.append(side_cut)
     main_body = main_body.cut(side_cut)
 
 for name, x_min, x_max, z_min, z_max in h716_end_side_cutouts:
@@ -275,10 +278,11 @@ for name, x_min, x_max, z_min, z_max in h716_end_side_cutouts:
     cut_center_z = (h716_z(z_min) + h716_z(z_max)) / 2.0
     cut_height = h716_z(z_max) - h716_z(z_min)
     end_cut = (
-        cq.Workplane("XZ")
-        .box(cut_width, side_wall + 4.0, cut_height, centered=True)
-        .translate((cut_center_x, -outer_length / 2.0, cut_center_z))
+        cq.Workplane("XY")
+        .box(cut_width, side_opening_depth, cut_height, centered=True)
+        .translate((cut_center_x, outer_length / 2.0, cut_center_z))
     )
+    end_opening_cutters.append(end_cut)
     main_body = main_body.cut(end_cut)
 
 # Local motion clearance for the separate button insert. The H716-derived side
@@ -351,7 +355,8 @@ for stake_y in button_heat_stake_y_positions:
     button_bar = button_bar.cut(stake_hole)
 
 # ---------------------------------------------------------------------------
-# Rear cover: separate back plate with inset lip, PCB bosses, battery rails.
+# Rear cover geometry: fused into the main enclosure body after its features
+# are added. It is no longer exported as a separate part.
 # ---------------------------------------------------------------------------
 rear_cover = rounded_box(outer_width, outer_length, rear_cover_thickness, outer_radius)
 
@@ -542,6 +547,11 @@ for x, y in pcb_mount_points:
     )
     rear_cover = rear_cover.union(boss).cut(screw_hole).cut(head_pocket)
 
+enclosure_body = main_body.union(rear_cover, clean=False)
+for opening_cut in side_opening_cutters + end_opening_cutters:
+    enclosure_body = enclosure_body.cut(opening_cut, clean=False)
+printable_assembly = enclosure_body.union(button_bar, clean=False).union(battery_door, clean=False)
+
 # Validation-only bridges to make a single connected assembly for zero-to-cad.
 validation_bridge_z = rear_cover_thickness + validation_bridge_height / 2.0
 validation_bridge_y = -outer_length / 2.0 + 2.0
@@ -567,8 +577,7 @@ battery_door_validation_bridge = (
 )
 
 result = (
-    main_body
-    .union(rear_cover, clean=False)
+    enclosure_body
     .union(bridge_left, clean=False)
     .union(bridge_right, clean=False)
     .union(button_bar, clean=False)

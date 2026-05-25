@@ -609,6 +609,173 @@
     {
       "stage": "export",
       "result": "re-exported shape/main_body/rear_cover/buttons/battery_door STEP and STL after button motion clearance update"
+    },
+    {
+      "stage": "fused_rear_cover_update",
+      "result": "fused rear_cover into main_body as enclosure_body; rear_cover.step is no longer exported",
+      "exported_files": [
+        "shape.step",
+        "main_body.step",
+        "buttons.step",
+        "battery_door.step"
+      ],
+      "removed_files": [
+        "rear_cover.step"
+      ],
+      "format_policy": "STEP only in the project folder; no STL, FCStd, macro, or preview regeneration"
+    },
+    {
+      "stage": "side_opening_layout_update",
+      "result": "updated side opening layout per user correction",
+      "minus_x_long_side": [
+        "SD_slot/long_side_slot y=-9.37..4.56 z=1.80..10.85",
+        "button_1 y=7.74..12.64 z=2.14..10.85",
+        "button_2 y=15.90..20.80 z=2.14..10.85",
+        "button_3 y=25.03..29.93 z=2.14..10.85"
+      ],
+      "plus_y_short_side": [
+        "wide_end_opening x=-20.88..10.19 z=1.80..9.91"
+      ],
+      "removed": [
+        "small_end_notch"
+      ]
+    },
+    {
+      "stage": "sd_slot_width_update",
+      "result": "superseded by source_stl_cutout_update; this was a temporary widened estimate",
+      "minus_x_long_side": [
+        "SD_slot/long_side_slot y=-22.10..4.56 z=1.80..10.85 width=26.67",
+        "button_1 y=7.74..12.64 z=2.14..10.85",
+        "button_2 y=15.90..20.80 z=2.14..10.85",
+        "button_3 y=25.03..29.93 z=2.14..10.85"
+      ],
+      "sd_to_button_1_gap": 3.17
+    },
+    {
+      "stage": "source_stl_cutout_update",
+      "result": "matched the -X long-side and +Y short-side opening boundary boxes to /home/midea/Downloads/h716_032n_frm.stl",
+      "source_file": "/home/midea/Downloads/h716_032n_frm.stl",
+      "source_bbox_centered_mm": {
+        "x": [
+          -38.000,
+          38.000
+        ],
+        "y": [
+          -64.000,
+          64.000
+        ],
+        "z": [
+          -2.550,
+          13.150
+        ]
+      },
+      "minus_x_long_side_source_mm": [
+        "long_side_slot y=-9.75..4.75 z=-2.55..8.05 size=14.50 x 10.60",
+        "button_1 y=8.05..13.15 z=1.516..8.05 size=5.10 x 6.534",
+        "button_2 y=16.55..21.65 z=1.516..8.05 size=5.10 x 6.534",
+        "button_3 y=26.05..31.15 z=1.516..8.05 size=5.10 x 6.534"
+      ],
+      "plus_y_short_side_source_mm": [
+        "wide_end_opening x=-15.30..-0.70 z=1.25..10.05 size=14.60 x 8.80"
+      ],
+      "model_coordinates_mm": {
+        "minus_x_long_slot": "y=-9.75..4.75 z=1.80..12.40",
+        "minus_x_buttons": "z=5.87..12.40",
+        "plus_y_wide_opening": "x=-15.30..-0.70 z=5.60..14.40"
+      }
+    },
+    {
+      "stage": "sd_slot_source_correction",
+      "result": "corrected the -X SD slot to the source STL upper narrow slot and removed the mistaken bottom-open long notch",
+      "source_comparison": {
+        "mistaken_previous_cutout": "bottom_open_long_notch y=-9.75..4.75 z=-2.55..8.05 size=14.50 x 10.60",
+        "correct_sd_slot": "top_left_narrow_slot y=-32.333..-16.933 z=9.05..10.05 size=15.40 x 1.00"
+      },
+      "model_coordinates_mm": {
+        "sd_slot": "y=-32.333..-16.933 z=13.40..14.40 size=15.40 x 1.00",
+        "button_1": "y=8.05..13.15 z=5.87..12.40",
+        "button_2": "y=16.55..21.65 z=5.87..12.40",
+        "button_3": "y=26.05..31.15 z=5.87..12.40"
+      }
+    },
+    {
+      "stage": "complete_source_x_face_restore",
+      "result": "restored every extracted -X side opening from /home/midea/Downloads/h716_032n_frm.stl instead of treating only one narrow slot as the full SD/opening set",
+      "source_vs_code_checked": true,
+      "minus_x_source_and_code_mm": [
+        "sd_slot y=-9.75..4.75 z=-2.55..8.05 size=14.50 x 10.60",
+        "top_left_narrow_slot y=-32.333..-16.933 z=9.05..10.05 size=15.40 x 1.00",
+        "top_right_narrow_slot y=32.667..48.067 z=9.05..10.05 size=15.40 x 1.00",
+        "button_1 y=8.05..13.15 z=1.516..8.05 size=5.10 x 6.534",
+        "button_2 y=16.55..21.65 z=1.516..8.05 size=5.10 x 6.534",
+        "button_3 y=26.05..31.15 z=1.516..8.05 size=5.10 x 6.534"
+      ],
+      "plus_y_source_and_code_mm": [
+        "wide_end_opening x=-15.30..-0.70 z=1.25..10.05 size=14.60 x 8.80"
+      ]
+    },
+    {
+      "stage": "sd_slot_semantic_fix",
+      "result": "made the button-left wide opening the explicit sd_slot and kept the two upper narrow slots separate",
+      "sd_slot_source_and_code_mm": "y=-9.75..4.75 z=-2.55..8.05 size=14.50 x 10.60",
+      "not_sd_slots_mm": [
+        "top_left_narrow_slot y=-32.333..-16.933 z=9.05..10.05 size=15.40 x 1.00",
+        "top_right_narrow_slot y=32.667..48.067 z=9.05..10.05 size=15.40 x 1.00"
+      ]
+    },
+    {
+      "stage": "source_z_alignment_fix",
+      "result": "aligned the source STL side-face bottom to current model z=0 after screenshot comparison showed all -X openings were 1.8 mm too high",
+      "mapping": "model_z = source_z - source_z_min",
+      "source_z_min": -2.55,
+      "model_coordinates_mm": [
+        "sd_slot y=-9.75..4.75 z=0.00..10.60 size=14.50 x 10.60",
+        "top_left_narrow_slot y=-32.333..-16.933 z=11.60..12.60 size=15.40 x 1.00",
+        "top_right_narrow_slot y=32.667..48.067 z=11.60..12.60 size=15.40 x 1.00",
+        "button_1 y=8.05..13.15 z=4.066..10.60 size=5.10 x 6.534",
+        "button_2 y=16.55..21.65 z=4.066..10.60 size=5.10 x 6.534",
+        "button_3 y=26.05..31.15 z=4.066..10.60 size=5.10 x 6.534",
+        "wide_end_opening x=-15.30..-0.70 z=3.80..12.60 size=14.60 x 8.80"
+      ],
+      "screenshots_checked": [
+        "/tmp/h716_xface_boundary_compare_after.png",
+        "/tmp/h716_3d_compare_after.png"
+      ]
+    },
+    {
+      "stage": "final_x_side_slot_cleanup",
+      "result": "removed the y=-20 and y=40 upper narrow slots, kept the y=0 SD slot bottom-open, and re-cut side openings after rear_cover/main_body fusion",
+      "minus_x_generated_openings_mm": [
+        "sd_slot y=-9.75..4.75 z=0.00..10.60 size=14.50 x 10.60",
+        "button_1 y=8.05..13.15 z=4.066..10.60 size=5.10 x 6.534",
+        "button_2 y=16.55..21.65 z=4.066..10.60 size=5.10 x 6.534",
+        "button_3 y=26.05..31.15 z=4.066..10.60 size=5.10 x 6.534"
+      ],
+      "removed_openings_mm": [
+        "top_left_narrow_slot y=-32.333..-16.933 z=11.60..12.60 size=15.40 x 1.00",
+        "top_right_narrow_slot y=32.667..48.067 z=11.60..12.60 size=15.40 x 1.00"
+      ],
+      "screenshots_checked": [
+        "/tmp/h716_xface_target_current_fixed.png",
+        "/tmp/h716_3d_current_fixed.png"
+      ]
+    },
+    {
+      "stage": "side_cutter_axis_fix",
+      "result": "fixed side/end opening cutters after section screenshots showed the sd_slot width was assigned to the wrong workplane-local axis",
+      "root_cause": "Workplane('YZ').box and Workplane('XZ').box dimensions were interpreted in local workplane axes, not global x/y/z order.",
+      "fix": "Use Workplane('XY').box with explicit global dimensions: side openings use x_depth, y_width, z_height; end openings use x_width, y_depth, z_height.",
+      "minus_x_generated_openings_mm": [
+        "sd_slot y=-9.75..4.75 z=0.00..10.60 size=14.50 x 10.60",
+        "button_1 y=8.05..13.15 z=4.066..10.60 size=5.10 x 6.534",
+        "button_2 y=16.55..21.65 z=4.066..10.60 size=5.10 x 6.534",
+        "button_3 y=26.05..31.15 z=4.066..10.60 size=5.10 x 6.534"
+      ],
+      "screenshots_checked": [
+        "/tmp/h716_minus_x_ortho_axis_fixed.png",
+        "/tmp/h716_section_y0_axis_fixed.png",
+        "/tmp/h716_current_axis_fixed_3d_views.png"
+      ]
     }
   ]
 }
