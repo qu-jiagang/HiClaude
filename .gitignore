@@ -13,5 +13,9 @@ __pycache__/
 
 .DS_Store
 
+# 3D-print intermediate output (regeneratable from STEP / CadQuery)
+projects/claude-fan/cad/parts/*.stl
+projects/claude-fan/cad/*.stl
+
 projects/epaper-lilygo-t547/firmware/.pio/
 projects/epaper-lilygo-t547/firmware/src/config_private.h
