@@ -9,8 +9,10 @@ import cadquery as cq
 screen_width = 66.0
 screen_length = 120.0
 compact_outer_delta = 3.8
-outer_width = screen_width + compact_outer_delta
-outer_length = screen_length + compact_outer_delta
+outer_shrink_width = 1.5
+outer_shrink_length = 1.5
+outer_width = screen_width + compact_outer_delta - outer_shrink_width
+outer_length = screen_length + compact_outer_delta - outer_shrink_length
 screen_corner_radius = 1.2
 outer_radius = 1.5
 
@@ -20,7 +22,7 @@ screen_opening_width = screen_width + screen_press_clearance
 screen_opening_length = screen_length + screen_press_clearance
 side_wall = (outer_width - screen_opening_width) / 2.0
 rear_cover_thickness = 2.1
-shell_height = 13.4
+shell_height = 14.4
 total_height = rear_cover_thickness + shell_height
 
 # Rear cover inside features.
@@ -41,7 +43,10 @@ battery_pocket_length = battery_cell_length + 2.0 * battery_clearance
 battery_pocket_x = 0.0
 battery_pocket_y = 0.0
 battery_rail_thickness = 1.4
-battery_rail_height = 1.8
+battery_rail_height = 4.0
+battery_rail_fillet_radius = 0.12
+battery_rail_outer_width = battery_pocket_width + battery_rail_thickness
+battery_rail_outer_length = battery_pocket_length + battery_rail_thickness
 
 # Centered removable battery door. The rear cover has an outside shallow seat,
 # a smaller through opening, and the separate cover has a locating plug.
@@ -64,15 +69,16 @@ battery_door_finger_notch_width = 14.0
 battery_door_finger_notch_length = 5.0
 battery_door_grip_y = -battery_door_panel_length / 2.0 + 5.0
 battery_door_tab_width = 10.0
-battery_door_tab_length = 3.6
-battery_door_tab_height = 1.0
+battery_door_tab_length = 2.0
+battery_door_tab_height = 0.8
 battery_door_tab_x_offset = 13.5
-battery_door_tab_overlap = 3.0
-battery_door_receiver_clearance = 0.65
-battery_door_snap_width = 12.0
-battery_door_snap_length = 1.6
-battery_door_snap_height = 0.55
-battery_door_snap_overlap = 0.8
+battery_door_tab_overlap = 1.6
+battery_door_receiver_clearance = 0.35
+battery_door_snap_width = 9.0
+battery_door_snap_length = 1.4
+battery_door_snap_height = 0.45
+battery_door_snap_overlap = 0.9
+battery_door_latch_chamfer = 0.15
 battery_door_flex_slot_width = 1.8
 battery_door_flex_slot_length = 24.0
 battery_door_flex_slot_x_offset = 8.0
@@ -394,15 +400,12 @@ for tab_x in (-battery_door_tab_x_offset, battery_door_tab_x_offset):
     )
     rear_cover = rear_cover.cut(tab_receiver)
 
-snap_receiver = (
-    cq.Workplane("XY")
-    .box(
-        battery_door_snap_width + 2.0 * battery_door_receiver_clearance,
-        battery_door_snap_overlap + 2.0 * battery_door_receiver_clearance,
-        battery_door_snap_height + 0.5,
-        centered=True,
-    )
-    .translate((0, snap_receiver_y, receiver_z))
+snap_receiver = rounded_cutter(
+    battery_door_snap_width + 2.0 * battery_door_receiver_clearance,
+    battery_door_snap_overlap + 2.0 * battery_door_receiver_clearance,
+    battery_door_snap_height + 0.5,
+    battery_door_receiver_clearance,
+    (0, snap_receiver_y, receiver_z),
 )
 rear_cover = rear_cover.cut(snap_receiver)
 
@@ -425,7 +428,7 @@ for x in (
 ):
     rail = (
         cq.Workplane("XY")
-        .box(battery_rail_thickness, battery_pocket_length, battery_rail_height, centered=True)
+        .box(battery_rail_thickness, battery_rail_outer_length, battery_rail_height, centered=True)
         .translate((x, battery_pocket_y, battery_door_panel_thickness + battery_door_plug_height + battery_rail_height / 2.0 - 0.15))
     )
     battery_retainer = rail if battery_retainer is None else battery_retainer.union(rail)
@@ -436,10 +439,12 @@ for y in (
 ):
     rail = (
         cq.Workplane("XY")
-        .box(battery_pocket_width, battery_rail_thickness, battery_rail_height, centered=True)
+        .box(battery_rail_outer_width, battery_rail_thickness, battery_rail_height, centered=True)
         .translate((battery_pocket_x, y, battery_door_panel_thickness + battery_door_plug_height + battery_rail_height / 2.0 - 0.15))
     )
     battery_retainer = rail if battery_retainer is None else battery_retainer.union(rail)
+
+battery_retainer = battery_retainer.edges().fillet(battery_rail_fillet_radius)
 
 # Wire channel toward BAT+/BAT- pads as shallow grooves in the cover interior.
 wire_a = (
@@ -481,14 +486,16 @@ battery_door_plug = rounded_box(
     max(0.8, battery_door_radius - 0.2),
 ).translate((0, 0, battery_door_panel_thickness))
 battery_door = battery_door.union(battery_door_plug)
-battery_door = battery_door.union(battery_retainer)
 
 tab_y = battery_door_opening_length / 2.0 + battery_door_tab_overlap / 2.0 - battery_door_receiver_clearance
 tab_z = battery_door_panel_thickness + battery_door_tab_height / 2.0 + 0.2
+snap_z = battery_door_panel_thickness + battery_door_plug_height - battery_door_snap_height / 2.0
 for tab_x in (-battery_door_tab_x_offset, battery_door_tab_x_offset):
     tab = (
         cq.Workplane("XY")
         .box(battery_door_tab_width, battery_door_tab_length, battery_door_tab_height, centered=True)
+        .edges()
+        .chamfer(battery_door_latch_chamfer)
         .translate((tab_x, tab_y, tab_z))
     )
     battery_door = battery_door.union(tab)
@@ -497,7 +504,9 @@ snap_y = -battery_door_opening_length / 2.0 - battery_door_snap_overlap / 2.0 + 
 snap = (
     cq.Workplane("XY")
     .box(battery_door_snap_width, battery_door_snap_length, battery_door_snap_height, centered=True)
-    .translate((0, snap_y, tab_z))
+    .edges()
+    .chamfer(battery_door_latch_chamfer)
+    .translate((0, snap_y, snap_z))
 )
 battery_door = battery_door.union(snap)
 
@@ -529,6 +538,10 @@ for vent_width, vent_length, vent_x, vent_y in battery_door_vent_slots:
         (vent_x, vent_y, battery_door_vent_cut_z),
     )
     battery_door = battery_door.cut(vent)
+
+# Keep the battery retaining frame continuous. The door's vent and flex cuts
+# happen first so they cannot leave open gaps in the four-sided retainer.
+battery_door = battery_door.union(battery_retainer)
 
 # PCB mounting bosses on rear cover.
 for x, y in pcb_mount_points:
