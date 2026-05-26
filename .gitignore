@@ -11,5 +11,7 @@ __pycache__/
 .agent-epaper-demo/
 .agent-epaper-state.json
 
-firmware/lilygo_t5_47/.pio/
-firmware/lilygo_t5_47/src/config_private.h
+.DS_Store
+
+projects/epaper-lilygo-t547/firmware/.pio/
+projects/epaper-lilygo-t547/firmware/src/config_private.h

@@ -6,20 +6,22 @@ This reference collects source links, local images, and observations for the `Li
 
 ## Local Reference Files
 
+All paths below are relative to this file (`projects/epaper-lilygo-t547/docs/`).
+
 | File | What it shows |
 |---|---|
-| `docs/reference/lilygo_t5_47/official-product-front-back.jpg` | Official product image with front display module and rear PCB visible. |
-| `docs/reference/lilygo_t5_47/official-touch-pinmap.jpg` | Official Touch V2.4 pinmap image, useful for connector/button/TF/USB-C placement. |
-| `docs/reference/lilygo_t5_47/official-basic-pinmap.jpg` | Official Basic V2.3 pinmap image, useful for non-touch layout comparison. |
-| `docs/reference/lilygo_t5_47/schematic-t5-epaper-s3-v2.3.pdf` | Official V2.3 schematic PDF from the LilyGo EPD47 repository. |
+| `official-product-front-back.jpg` | Official product image with front display module and rear PCB visible. |
+| `official-touch-pinmap.jpg` | Official Touch V2.4 pinmap image, useful for connector/button/TF/USB-C placement. |
+| `official-basic-pinmap.jpg` | Official Basic V2.3 pinmap image, useful for non-touch layout comparison. |
+| `schematic-t5-epaper-s3-v2.3.pdf` | Official V2.3 schematic PDF from the LilyGo EPD47 repository. |
 
 ## Image Preview
 
-![Official product front and back](lilygo_t5_47/official-product-front-back.jpg)
+![Official product front and back](official-product-front-back.jpg)
 
-![Official Touch pinmap](lilygo_t5_47/official-touch-pinmap.jpg)
+![Official Touch pinmap](official-touch-pinmap.jpg)
 
-![Official Basic pinmap](lilygo_t5_47/official-basic-pinmap.jpg)
+![Official Basic pinmap](official-basic-pinmap.jpg)
 
 ## Source Links
 

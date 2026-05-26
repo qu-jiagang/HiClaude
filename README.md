@@ -40,7 +40,7 @@ http://192.168.31.127:18765/state.json
 本地参考文件：
 
 - `docs/index.html`
-- `docs/reference/lilygo_t5_47_reference.md`
+- `projects/epaper-lilygo-t547/docs/REFERENCE.md`
 
 ## 当前状态
 
@@ -308,17 +308,17 @@ Upload Speed: 921600
 固件目录：
 
 ```text
-firmware/lilygo_t5_47/
+projects/epaper-lilygo-t547/firmware/
 ```
 
 关键文件：
 
 ```text
-firmware/lilygo_t5_47/platformio.ini
-firmware/lilygo_t5_47/boards/T5-ePaper-S3.json
-firmware/lilygo_t5_47/src/main.cpp
-firmware/lilygo_t5_47/src/config_private.example.h
-firmware/lilygo_t5_47/src/config_private.h
+projects/epaper-lilygo-t547/firmware/platformio.ini
+projects/epaper-lilygo-t547/firmware/boards/T5-ePaper-S3.json
+projects/epaper-lilygo-t547/firmware/src/main.cpp
+projects/epaper-lilygo-t547/firmware/src/config_private.example.h
+projects/epaper-lilygo-t547/firmware/src/config_private.h
 ```
 
 `config_private.h` 是本地私密配置，已被 `.gitignore` 忽略，不要提交。
@@ -352,7 +352,7 @@ firmware/lilygo_t5_47/src/config_private.h
 本项目使用 LilyGo 官方 `T5-ePaper-S3` board 定义：
 
 ```text
-firmware/lilygo_t5_47/boards/T5-ePaper-S3.json
+projects/epaper-lilygo-t547/firmware/boards/T5-ePaper-S3.json
 ```
 
 这点很重要。通用 `esp32-s3-devkitc-1` 目标可以编译和上传，但 Flash/PSRAM 参数不完全匹配，实测会导致板子反复从 ROM 启动。
@@ -362,22 +362,22 @@ firmware/lilygo_t5_47/boards/T5-ePaper-S3.json
 编译：
 
 ```bash
-cd firmware/lilygo_t5_47
-PLATFORMIO_CORE_DIR=../../.platformio-core ../../.venv/bin/pio run
+cd projects/epaper-lilygo-t547/firmware
+PLATFORMIO_CORE_DIR=../../../.platformio-core ../../../.venv/bin/pio run
 ```
 
 上传：
 
 ```bash
-cd firmware/lilygo_t5_47
-PLATFORMIO_CORE_DIR=../../.platformio-core ../../.venv/bin/pio run -t upload --upload-port /dev/cu.usbmodem1301
+cd projects/epaper-lilygo-t547/firmware
+PLATFORMIO_CORE_DIR=../../../.platformio-core ../../../.venv/bin/pio run -t upload --upload-port /dev/cu.usbmodem1301
 ```
 
 查看串口日志：
 
 ```bash
-cd firmware/lilygo_t5_47
-PLATFORMIO_CORE_DIR=../../.platformio-core ../../.venv/bin/pio device monitor --port /dev/cu.usbmodem1301 --baud 115200
+cd projects/epaper-lilygo-t547/firmware
+PLATFORMIO_CORE_DIR=../../../.platformio-core ../../../.venv/bin/pio device monitor --port /dev/cu.usbmodem1301 --baud 115200
 ```
 
 已验证上传日志里会识别到：
@@ -425,10 +425,13 @@ Fetching http://192.168.31.127:18765/state.json
 ## 项目结构
 
 ```text
-src/agent_epaper/       Python CLI、状态模型、HTTP 服务、渲染逻辑
-firmware/lilygo_t5_47/  LilyGo T5-ePaper-S3 固件
-docs/                   本地实施指南、参考资料和图片
-tests/                  Python 单元测试
+src/agent_epaper/                       Python CLI、状态模型、HTTP 服务、渲染逻辑
+projects/epaper-lilygo-t547/cad/        墨水屏全包外壳 STEP / CadQuery
+projects/epaper-lilygo-t547/firmware/   LilyGo T5-ePaper-S3 固件
+projects/epaper-lilygo-t547/docs/       原厂引脚图、原理图、REFERENCE.md
+projects/claude-fan/                    Claude Code 像素小人外形 FD14 140mm 风扇外壳（CadQuery + STEP，待打印验证）
+docs/                                   仓库首页和共享文档
+tests/                                  Python 单元测试
 ```
 
 ## 备注
