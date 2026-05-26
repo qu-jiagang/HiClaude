@@ -10,17 +10,19 @@
   ],
   "key_dimensions": {
     "screen": "120 x 66",
-    "outer_body": "123 x 69",
-    "enclosure_top_height": 15.2,
+    "outer_body": "123.8 x 69.8",
+    "enclosure_top_height": 15.5,
     "screen_corner_radius": 1.2,
     "outer_corner_radius": 1.5,
     "battery_pocket_center": [0.0, 0.0],
-    "battery_pocket_clear_span": "x -25.8..25.8, y -41.3..41.3; centered and clear of the verified screw bosses",
-    "battery_door_design": "centered sliding removable rear battery door with two upper insertion tongues, matching receiver pockets, a lower snap tooth, flex relief slots, and a fingernail notch",
-    "battery_door_recess": "59.6 x 90.6 x 0.8 deep",
-    "battery_door_opening": "55.6 x 86.6 through opening",
-    "battery_door_panel": "58.9 x 89.9 x 0.7, exported separately as battery_door.step",
-    "battery_door_latching": "insert upper tongues first, press lower edge until the snap tooth catches; pry at the fingernail notch to flex the lower tongue and open",
+    "battery_cell": "82 x 51 x 4",
+    "battery_pocket_clear_span": "x -26.3..26.3, y -41.8..41.8; centered and clear of the verified screw bosses",
+    "battery_retainer": "1.4 mm thick x 1.8 mm high rails on the inside of battery_door.step",
+    "battery_door_design": "centered sliding removable rear battery door with two upper insertion tongues, enlarged receiver pockets, a lower low-profile snap tooth, longer flex relief slots, and a fingernail notch",
+    "battery_door_recess": "60.6 x 91.6 x 1.1 deep",
+    "battery_door_opening": "56.6 x 87.6 through opening",
+    "battery_door_panel": "59.9 x 90.9 x 1.0, exported separately as battery_door.step",
+    "battery_door_latching": "insert upper tongues first, then press the lower edge; the lower snap is reduced to 0.55 mm high with 0.65 mm receiver clearance so it can catch more easily",
     "h716_side_reference": "Thingiverse 6897183 / H716 V2.4 case model",
     "h716_frm_cutout_source": "h716_032n_frm.stl exact side-face boundary boxes",
     "h716_left_side_cutouts": [
@@ -51,11 +53,12 @@
       "slot: x 10.8..13.2, y 20.0..28.0"
     ],
     "button_insert": "separate three-button carrier exported as buttons.step; retained by two main-body heat-stake posts through matching holes",
-    "button_heat_stake_mounting": "two 1.2 mm diameter posts grow from the inner side wall at the solid webs between the three button openings; the button strip has 1.55 mm clearance holes and is fixed by heat-melting the post tips after installation",
+    "button_heat_stake_mounting": "two 1.6 mm diameter posts grow from the inner side wall at the solid webs between the three button openings; the button strip has 1.95 mm clearance holes and is fixed by heat-melting the post tips after installation",
     "adhesive_tape_thickness_assumption": 0.2,
     "screen_board_stack_height_assumption": 8.2,
-    "bottom_screw_clearance": 2.4,
-    "bottom_screw_head_pocket": "4.6 diameter x 1.0 deep",
+    "mount_boss": "7.0 diameter x 8.2 high; raised 3.0 mm for M3 screws",
+    "bottom_screw_clearance": 3.2,
+    "bottom_screw_head_pocket": "6.0 diameter x 2.0 deep",
     "verified_h716_v24_pcb_hole_reference": "PCB left-top origin, board_x along 120mm length, board_y along 66mm width",
     "verified_h716_v24_pcb_hole_points": [
       [5.0, 4.9],
@@ -188,27 +191,42 @@
     "This restores sd_slot width along model Y to 14.50 mm instead of assigning that dimension to the wrong axis.",
     "Verified with /tmp/h716_minus_x_ortho_axis_fixed.png, /tmp/h716_section_y0_axis_fixed.png, and /tmp/h716_current_axis_fixed_3d_views.png."
   ],
+  "changes_from_printability_tuning": [
+    "Increased the compact outer delta from 3.0 mm to 3.8 mm, raising the side wall from about 1.18 mm to about 1.58 mm.",
+    "Increased rear cover thickness from 1.8 mm to 2.1 mm and battery door panel thickness from 0.7 mm to 1.0 mm.",
+    "Strengthened the sliding battery door latch details: tab height 1.0 mm, snap height 0.9 mm, and flex relief slots widened to 1.4 mm.",
+    "Strengthened the heat-staked button insert: carrier 1.8 x 2.0 mm, heat-stake posts 1.6 mm, clearance holes 1.95 mm, and deeper button stems so the button strip exports as one connected solid."
+  ],
+  "changes_from_m3_mount_update": [
+    "Raised the four internal cylindrical PCB screw bosses by 3.0 mm.",
+    "Changed the screw clearance holes from 2.4 mm to 3.2 mm for M3 screws.",
+    "Changed the bottom screw head pockets from 4.6 x 1.0 mm to 6.0 x 2.0 mm and increased boss diameter from 5.8 mm to 7.0 mm."
+  ],
+  "changes_from_battery_door_fit_update": [
+    "Updated the battery size assumption from 81 x 50 x 4 mm to 82 x 51 x 4 mm.",
+    "Expanded the battery pocket, rear door opening, recess, and battery door panel by 1.0 mm in both width and length.",
+    "Raised the battery retaining rails from 1.0 mm to 1.8 mm and thickened them from 1.0 mm to 1.4 mm.",
+    "Made the lower battery-door snap easier to engage by reducing snap height from 0.9 mm to 0.55 mm, reducing snap overlap from 1.2 mm to 0.8 mm, and increasing receiver clearance from 0.35 mm to 0.65 mm.",
+    "Lengthened and widened the battery-door flex relief slots to make the lower latch tongue more flexible."
+  ],
   "validation": {
     "passed": true,
-    "tool": "skill/validate.py --stdin",
+    "tool": "CadQuery STEP export plus per-part STEP import/topology check",
     "metrics": {
-      "n_solids": 1,
-      "n_faces": 422,
-      "n_edges": 1215,
-      "volume": 20696.29040431797,
-      "surface_area": 31576.13093774155,
-      "sa_to_volume": 1.5256903687026766,
-      "bbox": [
-        -37.45,
-        -61.5,
-        -0.04999999999999999,
-        34.5,
-        61.5,
-        15.200000000000001
-      ],
-      "face_types": {
-        "PLANE": 298,
-        "CYLINDER": 124
+      "main_body": {
+        "n_solids": 1,
+        "bbox": [69.8, 123.8, 15.5],
+        "volume": 15407.37
+      },
+      "battery_door": {
+        "n_solids": 1,
+        "bbox": [59.9, 91.9, 3.65],
+        "volume": 10213.88
+      },
+      "buttons": {
+        "n_solids": 1,
+        "bbox": [6.53, 25.0, 5.45],
+        "volume": 286.6
       }
     }
   },

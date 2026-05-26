@@ -8,7 +8,7 @@ import cadquery as cq
 # Compact footprint driven directly by the user's measured 120 x 66 mm front.
 screen_width = 66.0
 screen_length = 120.0
-compact_outer_delta = 3.0
+compact_outer_delta = 3.8
 outer_width = screen_width + compact_outer_delta
 outer_length = screen_length + compact_outer_delta
 screen_corner_radius = 1.2
@@ -19,7 +19,7 @@ screen_press_clearance = 0.65
 screen_opening_width = screen_width + screen_press_clearance
 screen_opening_length = screen_length + screen_press_clearance
 side_wall = (outer_width - screen_opening_width) / 2.0
-rear_cover_thickness = 1.8
+rear_cover_thickness = 2.1
 shell_height = 13.4
 total_height = rear_cover_thickness + shell_height
 
@@ -31,8 +31,8 @@ rear_lip_outer_length = screen_opening_length - rear_lip_clearance
 rear_lip_wall = 1.0
 rear_lip_radius = screen_corner_radius - 0.4
 
-battery_cell_width = 50.0
-battery_cell_length = 81.0
+battery_cell_width = 51.0
+battery_cell_length = 82.0
 battery_cell_thickness = 4.0
 battery_clearance = 0.8
 thermal_barrier_thickness = 1.0
@@ -40,8 +40,8 @@ battery_pocket_width = battery_cell_width + 2.0 * battery_clearance
 battery_pocket_length = battery_cell_length + 2.0 * battery_clearance
 battery_pocket_x = 0.0
 battery_pocket_y = 0.0
-battery_rail_thickness = 1.0
-battery_rail_height = thermal_barrier_thickness
+battery_rail_thickness = 1.4
+battery_rail_height = 1.8
 
 # Centered removable battery door. The rear cover has an outside shallow seat,
 # a smaller through opening, and the separate cover has a locating plug.
@@ -50,7 +50,7 @@ battery_door_opening_length = battery_pocket_length + 4.0
 battery_door_recess_margin = 2.0
 battery_door_recess_width = battery_door_opening_width + 2.0 * battery_door_recess_margin
 battery_door_recess_length = battery_door_opening_length + 2.0 * battery_door_recess_margin
-battery_door_recess_depth = 0.8
+battery_door_recess_depth = 1.1
 battery_door_panel_clearance = 0.35
 battery_door_panel_thickness = battery_door_recess_depth - 0.1
 battery_door_panel_width = battery_door_recess_width - 2.0 * battery_door_panel_clearance
@@ -65,16 +65,16 @@ battery_door_finger_notch_length = 5.0
 battery_door_grip_y = -battery_door_panel_length / 2.0 + 5.0
 battery_door_tab_width = 10.0
 battery_door_tab_length = 3.6
-battery_door_tab_height = 0.8
+battery_door_tab_height = 1.0
 battery_door_tab_x_offset = 13.5
 battery_door_tab_overlap = 3.0
-battery_door_receiver_clearance = 0.35
-battery_door_snap_width = 13.0
-battery_door_snap_length = 2.0
-battery_door_snap_height = 0.75
-battery_door_snap_overlap = 1.2
-battery_door_flex_slot_width = 1.1
-battery_door_flex_slot_length = 16.0
+battery_door_receiver_clearance = 0.65
+battery_door_snap_width = 12.0
+battery_door_snap_length = 1.6
+battery_door_snap_height = 0.55
+battery_door_snap_overlap = 0.8
+battery_door_flex_slot_width = 1.8
+battery_door_flex_slot_length = 24.0
 battery_door_flex_slot_x_offset = 8.0
 
 # Rear-cover perimeter vents are intentionally empty now: after the battery
@@ -126,11 +126,11 @@ pcb_mount_points = [
 ]
 adhesive_tape_thickness = 0.2
 screen_board_stack_height = 8.2
-mount_boss_diameter = 5.8
-mount_screw_clearance_diameter = 2.4
-mount_screw_head_diameter = 4.6
-mount_screw_head_depth = 1.0
-mount_boss_height = shell_height - screen_board_stack_height
+mount_boss_diameter = 7.0
+mount_screw_clearance_diameter = 3.2
+mount_screw_head_diameter = 6.0
+mount_screw_head_depth = 2.0
+mount_boss_height = shell_height - screen_board_stack_height + 3.0
 
 bat_pad_x = -1.0
 bat_pad_y = 4.0
@@ -187,20 +187,20 @@ button_cut_z = (h716_z(1.516) + h716_z(8.05)) / 2.0
 button_cap_depth = 3.2
 button_cap_length = 4.4
 button_cap_height = 4.2
-button_carrier_depth = 1.4
+button_carrier_depth = 1.8
 button_carrier_length = 25.0
-button_carrier_height = 1.8
+button_carrier_height = 2.0
 button_carrier_z_offset = -2.35
-button_flex_gap = 0.7
-button_stem_depth = 1.6
+button_flex_gap = 1.1
+button_stem_depth = 2.4
 button_stem_length = 2.4
 button_stem_height = 2.2
 button_stem_z_offset = -2.1
 button_motion_clearance_depth = button_stem_depth + 0.9
 button_motion_clearance_length = button_stem_length + 0.9
 button_motion_clearance_height = button_stem_height + 0.9
-button_heat_stake_diameter = 1.2
-button_heat_stake_hole_diameter = 1.55
+button_heat_stake_diameter = 1.6
+button_heat_stake_hole_diameter = 1.95
 button_heat_stake_length = 2.2
 button_heat_stake_tip_allowance = 0.45
 

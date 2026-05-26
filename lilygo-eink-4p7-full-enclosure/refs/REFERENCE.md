@@ -23,9 +23,23 @@
 ## Rear Screw Mounts
 
 - Rear-cover PCB bosses now have through holes for bottom screw access.
-- Screw clearance: 2.4 mm.
-- Screw head pocket: 4.6 mm diameter x 1.0 mm deep.
-- Boss diameter: 5.8 mm.
+- Screw clearance: 3.2 mm for M3 screws.
+- Screw head pocket: 6.0 mm diameter x 2.0 mm deep.
+- Boss diameter: 7.0 mm.
+- Boss height is 8.2 mm, raised 3.0 mm from the previous mount height.
+
+## Printability Tuning
+
+- Current body envelope is about 123.8 x 69.8 x 15.5 mm.
+- The side wall was increased to about 1.58 mm for a more reliable FDM print.
+- The rear cover is now 2.1 mm thick, and the removable battery door panel is
+  1.0 mm thick.
+- The battery door tabs/snap and the side-button heat-stake posts were slightly
+  enlarged so the small service parts are less fragile.
+- The battery door lower snap is now a lower-profile, easier-engaging latch,
+  with larger receiver clearance and longer flex relief slots.
+- The battery retainer is sized for an 82 x 51 x 4 mm battery and uses taller
+  1.8 mm rails on the removable battery door.
 
 ## Openings
 
