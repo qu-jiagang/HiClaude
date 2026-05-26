@@ -4,7 +4,7 @@ Generated via the zero-to-cad skill (Z2C agentic CAD synthesis loop).
 
 Reference: design.md + concept-06-fixed-15deg.png in this directory.
 
-Assembly method: M4 through-screws clamp front_cover -> fan -> rear_shell;
+Assembly method: M4 self-tap screws clamp front_cover -> fan -> rear_shell boss;
                  control_pod / top_spine / wedge_feet / rear_heel are bonded
                  (or M3 screwed) to the rear_shell.
 
@@ -29,7 +29,7 @@ from pathlib import Path
 
 import cadquery as cq
 
-# === Parameters (mm, all traceable to design.md or FD14 datasheet) ===
+# === Parameters (mm) ===
 # FD14 fan
 fan_w = 140.0
 fan_h = 140.0
@@ -37,8 +37,7 @@ fan_thick = 26.0
 fan_hole_pitch = 124.5
 fan_bore_dia = 132.0
 
-# Pixel-robot silhouette (design.md, body_h widened from 138 → 142 so the
-# 140 mm fan clears the head/leg seams with 1 mm/side)
+# Pixel-robot silhouette
 body_w = 176.0
 body_h = 142.0
 body_cy = 10.0
@@ -55,7 +54,7 @@ leg_dx = 42.0
 leg_cy = -80.0
 fillet_r = 3.0
 
-# Z layout (~70 mm total) with 0.3 mm fan-thickness tolerance per side
+# Z layout
 fan_z_clearance = 0.3
 front_thick = 4.0
 front_z = fan_thick / 2.0 + fan_z_clearance      # +13.3
@@ -63,13 +62,17 @@ rear_thick = 24.0
 rear_z_top = -fan_thick / 2.0 - fan_z_clearance  # -13.3
 duct_len = 15.0
 
-# Internal cable conduit cross-section
+# Cable
 cable_w = 8.0
 cable_h = 6.0
+cable_conduit_depth = 4.0  # depth into rear_shell front face
 
-# M4 fan mounting
+# M4 fan mounting — split clearance vs self-tap pilot
+# Screws: M4 × 40 mm, threads cut as screw enters the boss
+screw_clearance_dia = 4.5   # front_cover clearance (pass-through)
+boss_tap_dia = 3.4          # rear_shell boss self-tap pilot drill
+# If using brass heat-set inserts instead, set boss_tap_dia = 5.7
 boss_dia = 11.0
-boss_inner = 4.4
 boss_positions = [
     (-fan_hole_pitch / 2, body_cy - fan_hole_pitch / 2),
     ( fan_hole_pitch / 2, body_cy - fan_hole_pitch / 2),
@@ -77,7 +80,26 @@ boss_positions = [
     ( fan_hole_pitch / 2, body_cy + fan_hole_pitch / 2),
 ]
 
-assembly_method = "m4_through_clamp"
+# Fixed 15° tilt — shared by wedge_feet and rear_heel so both bottom faces
+# lie on the same desk plane and provide real 3-point support
+tilt_deg = 15.0
+foot_back = 8.0
+foot_depth = leg_h                                # 42 (wedge length along Y)
+foot_front = foot_back + foot_depth * tan(radians(tilt_deg))
+foot_z_top = rear_z_top - rear_thick + 0.1
+foot_fy0 = leg_cy - leg_h / 2                     # -101
+foot_fy1 = leg_cy + leg_h / 2                     # -59
+
+# Desk plane: z = desk_a + desk_b * y (derived from foot bottom corners)
+desk_b = (foot_front - foot_back) / (foot_fy1 - foot_fy0)
+desk_a = (foot_z_top - foot_back) - desk_b * foot_fy1
+
+
+def desk_z(y: float) -> float:
+    return desk_a + desk_b * y
+
+
+assembly_method = "m4_self_tap_through_clamp"
 
 ORANGE = cq.Color(0.95, 0.42, 0.18, 1.0)
 DARK   = cq.Color(0.10, 0.10, 0.10, 1.0)
@@ -108,24 +130,44 @@ def make_front_cover():
     cover = silhouette(front_thick, front_z)
     cover = (cover.faces(">Z").workplane()
              .center(0, body_cy).circle(fan_bore_dia / 2 - 4).cutThruAll())
+    # Blind eye pockets (2 mm deep) — gives the 黑色方眼 look without exposing
+    # the fan blades. Fill with black paint or do a filament swap on the top
+    # 2 mm of the print.
+    eye_depth = 2.0
     for ex in (-26, 26):
-        cover = (cover.faces(">Z").workplane()
-                 .center(ex, head_cy + 2).rect(12, 12).cutThruAll())
+        eye_cut = (cq.Workplane("XY")
+                   .center(ex, head_cy + 2)
+                   .box(12, 12, eye_depth, centered=(True, True, False))
+                   .translate((0, 0, front_z + front_thick - eye_depth)))
+        cover = cover.cut(eye_cut)
+    # M4 screw clearance holes (front_cover -> fan -> rear boss)
     for x, y in boss_positions:
         cover = (cover.faces(">Z").workplane()
-                 .center(x, y).circle(boss_inner / 2).cutThruAll())
-    # Sparse radial grille bars across the fan bore
+                 .center(x, y).circle(screw_clearance_dia / 2).cutThruAll())
+    # Grille: 6 radial bars (30°) + concentric ring at r=30 + small hub.
+    # The ring splits each 30° wedge into smaller openings and braces the
+    # cover centre against finger / airflow deflection.
     bar_th = 3.0
     bar_len = fan_bore_dia - 20
     rib_extrude = front_thick - 1.0
     ribs = None
-    for ang_deg in (0, 60, 120):
+    for ang_deg in (0, 30, 60, 90, 120, 150):
         rib = (cq.Workplane("XY")
                .rect(bar_len, bar_th)
                .extrude(rib_extrude)
                .translate((0, body_cy, front_z + 0.5))
                .rotate((0, body_cy, 0), (0, body_cy, 1), ang_deg))
         ribs = rib if ribs is None else ribs.union(rib)
+    ring_r = 30.0
+    ring = (cq.Workplane("XY").center(0, body_cy)
+            .circle(ring_r + bar_th / 2).circle(ring_r - bar_th / 2)
+            .extrude(rib_extrude)
+            .translate((0, 0, front_z + 0.5)))
+    ribs = ribs.union(ring)
+    hub = (cq.Workplane("XY").center(0, body_cy)
+           .circle(8.0).extrude(rib_extrude)
+           .translate((0, 0, front_z + 0.5)))
+    ribs = ribs.union(hub)
     bore_mask = (cq.Workplane("XY").center(0, body_cy)
                  .circle(fan_bore_dia / 2 - 5)
                  .extrude(front_thick + 2)
@@ -150,9 +192,23 @@ def make_rear_shell():
                 .extrude(pocket_depth)
                 .translate((0, 0, rear_z_top - pocket_depth)))
         shell = shell.union(boss)
+    # Self-tap pilot through bosses — screw cuts threads on the way in
     for x, y in boss_positions:
         shell = (shell.faces("<Z").workplane()
-                 .center(x, y).circle(boss_inner / 2).cutThruAll())
+                 .center(x, y).circle(boss_tap_dia / 2).cutThruAll())
+    # Cable conduit — recessed slot on the front face bridging fan_pocket top
+    # and the head region, so the fan cable can travel up into top_spine
+    # without crossing the fan blades.
+    conduit_y0 = body_cy + body_h / 2 - 6        # 75 (inside fan_pocket)
+    conduit_y1 = head_cy + head_h / 2 - 2        # 109 (just under spine seat)
+    conduit_cut = (cq.Workplane("XY")
+                   .center(0, (conduit_y0 + conduit_y1) / 2)
+                   .box(cable_w + 2,
+                        conduit_y1 - conduit_y0,
+                        cable_conduit_depth,
+                        centered=(True, True, False))
+                   .translate((0, 0, rear_z_top - cable_conduit_depth)))
+    shell = shell.cut(conduit_cut)
     # Flared exhaust duct — outer cone minus inner cone for an annular flare
     duct_z0 = rear_z_top - rear_thick
     outer = (cq.Workplane("XY").center(0, body_cy)
@@ -172,10 +228,10 @@ def make_rear_shell():
 
 # --- Top cable spine ---
 def make_top_spine():
-    """Spine on top of the head, with a hidden cable channel that opens
-    DOWNWARD so the fan cable enters from the fan-zone air below and is
-    hidden under a 5 mm top cover."""
-    spine_w = 100.0
+    """Spine on top of the head, slightly wider than the head so the seam
+    reads as an intentional brow / ledge rather than a separate add-on.
+    Hidden cable channel opens downward to receive the fan cable from below."""
+    spine_w = head_w + 6.0                  # 110 — slightly wider than head
     spine_h_y = 22.0
     spine_thick = 16.0
     spine_cy = head_cy + head_h / 2 - 4
@@ -184,7 +240,6 @@ def make_top_spine():
              .box(spine_w, spine_h_y, spine_thick)
              .translate((0, 0, spine_cz)))
     spine = spine.edges("|Z").fillet(2.5)
-    # Channel cut from -Z face, 11 mm deep, leaves 5 mm top cover
     channel = (cq.Workplane("XY").center(0, spine_cy)
                .box(spine_w - 12, cable_h + 1, 11, centered=(True, True, False))
                .translate((0, 0, spine_cz - spine_thick / 2 - 0.1)))
@@ -194,34 +249,32 @@ def make_top_spine():
 # --- Right-side control pod ---
 def make_control_pod():
     """Hollow shoulder pod hosting the controller PCB.
-    Service access opens on -Z (back); cable feed-through on -X (toward body)."""
-    pod_w = 30.0
-    pod_h_y = 52.0
+    Slimmer (was 30×52) and embedded into the arm so the pod no longer sticks
+    out as a visual lump. Service access opens on -Z; cable feed-through on -X.
+    """
+    pod_w = 26.0
+    pod_h_y = 48.0
     pod_thick = 38.0
-    pod_cx = arm_dx + arm_w / 2 + pod_w / 2 - 8
+    # Pod right edge sits 4 mm beyond the arm right edge (was 22 mm)
+    pod_cx = arm_dx + arm_w / 2 + 4 - pod_w / 2     # = 107
     pod_cy = arm_cy
     wall = 3.0
     pod = (cq.Workplane("XY").center(pod_cx, pod_cy)
            .box(pod_w, pod_h_y, pod_thick))
     pod = pod.edges("|Z").fillet(3.0)
-    # Internal PCB cavity (24 × 46 × 28)
     cavity = (cq.Workplane("XY").center(pod_cx, pod_cy)
               .box(pod_w - 2 * wall, pod_h_y - 2 * wall, pod_thick - 2 * wall - 4))
     pod = pod.cut(cavity)
-    # Cable feed-through on -X face (faces body / fan-zone air)
     cable_in = (cq.Workplane("YZ").rect(14, 10).extrude(6)
                 .translate((pod_cx - pod_w / 2 - 1, pod_cy - 8, 0)))
     pod = pod.cut(cable_in)
-    # Service access on -Z face (full-cavity-size opening; external snap cover)
     service = (cq.Workplane("XY").center(pod_cx, pod_cy)
                .rect(pod_w - 2 * wall - 1, pod_h_y - 2 * wall - 1).extrude(6)
                .translate((0, 0, -pod_thick / 2 - 1)))
     pod = pod.cut(service)
-    # USB-C through-hole (right face +X)
     usb = (cq.Workplane("YZ").rect(10, 4).extrude(8)
-           .translate((pod_cx + pod_w / 2 - 4, pod_cy + 14, 8)))
+           .translate((pod_cx + pod_w / 2 - 4, pod_cy + 12, 8)))
     pod = pod.cut(usb)
-    # Knob through-hole (right face +X)
     knob = (cq.Workplane("YZ").circle(5).extrude(8)
             .translate((pod_cx + pod_w / 2 - 4, pod_cy - 4, -8)))
     return pod.cut(knob)
@@ -229,40 +282,44 @@ def make_control_pod():
 
 # --- Wedge feet (fixed 15° tilt) ---
 def make_wedge_feet():
-    tilt = radians(15)
-    foot_w = 36.0
-    fy0 = leg_cy - leg_h / 2
-    fy1 = leg_cy + leg_h / 2
-    foot_depth = fy1 - fy0
-    foot_back = 8.0
-    foot_front = foot_back + foot_depth * tan(tilt)
-    z_top = rear_z_top - rear_thick + 0.1
+    foot_w_x = 36.0
     pts = [
-        (fy0, z_top),
-        (fy1, z_top),
-        (fy1, z_top - foot_back),
-        (fy0, z_top - foot_front),
+        (foot_fy0, foot_z_top),
+        (foot_fy1, foot_z_top),
+        (foot_fy1, foot_z_top - foot_back),
+        (foot_fy0, foot_z_top - foot_front),
     ]
     feet = None
     for x_center in (-leg_dx, leg_dx):
         prof = cq.Workplane("YZ").polyline(pts).close()
-        foot = prof.extrude(foot_w).translate((x_center - foot_w / 2, 0, 0))
+        foot = prof.extrude(foot_w_x).translate((x_center - foot_w_x / 2, 0, 0))
         foot = foot.edges("|X").fillet(1.5)
         feet = foot if feet is None else feet.union(foot)
     return feet
 
 
-# --- Rear heel (third support point under legs) ---
+# --- Rear heel (third support point) ---
 def make_rear_heel():
-    heel_w = 2 * leg_dx + leg_w + 6
+    """Tilted heel whose bottom face lies on the same 15° desk plane as the
+    wedge feet — so the device gets real three-point support instead of
+    rocking on the feet. Narrowed to fit between the legs (no overlap with
+    the wedge feet)."""
+    heel_w = 2 * (leg_dx - leg_w / 2) - 4           # 50 — sits between legs
     heel_h_y = 28.0
-    heel_thick = 16.0
     heel_cy = leg_cy + 4
-    heel_cz = rear_z_top - rear_thick - heel_thick / 2 + 6
-    heel = (cq.Workplane("XY").center(0, heel_cy)
-            .box(heel_w, heel_h_y, heel_thick)
-            .translate((0, 0, heel_cz)))
-    return heel.edges("|Z").fillet(5.0)
+    fy0 = heel_cy - heel_h_y / 2                    # -90
+    fy1 = heel_cy + heel_h_y / 2                    # -62
+    z_top = foot_z_top
+    pts = [
+        (fy0, z_top),
+        (fy1, z_top),
+        (fy1, desk_z(fy1)),
+        (fy0, desk_z(fy0)),
+    ]
+    prof = cq.Workplane("YZ").polyline(pts).close()
+    heel = prof.extrude(heel_w).translate((-heel_w / 2, 0, 0))
+    heel = heel.edges("|X").fillet(2.0)
+    return heel
 
 
 # --- Export ---
