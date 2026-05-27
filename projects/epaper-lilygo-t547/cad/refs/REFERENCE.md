@@ -7,7 +7,8 @@
 - Because the board is almost the same footprint as the screen, the bonded
   stack can be positioned as a single rigid module.
 - The enclosure no longer uses screen snap latches or screen support pads.
-- PCB mounting screws from the rear/bottom define the final stack position.
+- The four internal PCB screw bosses have been removed; the bonded stack is
+  retained by the flush front fit and adhesive.
 - The former rear cover is now fused into the main enclosure body rather than
   exported as a separate printable cover.
 
@@ -17,20 +18,17 @@
 - The screen face is intended to sit level with the top edge of the shell.
 - No printed lip crosses over the screen face.
 - Exact flushness depends on the real bonded stack height; the current model
-  assumes about 8.2 mm from PCB mounting plane to screen face, including about
-  0.2 mm tape.
+  assumes about 8.2 mm from PCB to screen face, including about 0.2 mm tape.
 
-## Rear Screw Mounts
+## PCB Boss Removal
 
-- Rear-cover PCB bosses now have through holes for bottom screw access.
-- Screw clearance: 3.2 mm for M3 screws.
-- Screw head pocket: 6.0 mm diameter x 2.0 mm deep.
-- Boss diameter: 7.0 mm.
-- Boss height is 8.2 mm, raised 3.0 mm from the previous mount height.
+- The four rear-cover PCB bosses are no longer generated.
+- The matching bottom screw clearance holes and screw head pockets are also
+  removed from `main_body.step`.
 
 ## Printability Tuning
 
-- Current body envelope is about 123.8 x 69.8 x 15.5 mm.
+- Current body envelope is about 122.3 x 68.3 x 16.5 mm.
 - The side wall was increased to about 1.58 mm for a more reliable FDM print.
 - The rear cover is now 2.1 mm thick, and the removable battery door panel is
   1.0 mm thick.
@@ -52,7 +50,7 @@
 
 ## Split
 
-- `main_body.step`: fused flush side shell and rear cover with bottom-access PCB
-  screw mounts.
+- `main_body.step`: fused flush side shell and rear cover, with the former PCB
+  screw bosses removed.
 - `buttons.step`: separate three-button insert.
 - `battery_door.step`: separate sliding battery door.

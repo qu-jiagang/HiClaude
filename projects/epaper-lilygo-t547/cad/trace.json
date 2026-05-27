@@ -776,6 +776,46 @@
         "/tmp/h716_section_y0_axis_fixed.png",
         "/tmp/h716_current_axis_fixed_3d_views.png"
       ]
+    },
+    {
+      "stage": "mount_boss_removal",
+      "result": "removed the four internal cylindrical PCB screw bosses from the fused main body because they were redundant",
+      "removed_features": [
+        "four 7.0 mm diameter PCB bosses",
+        "four 3.2 mm bottom screw clearance holes",
+        "four 6.0 mm screw head pockets"
+      ]
+    },
+    {
+      "stage": "validate",
+      "result": "success",
+      "metrics": {
+        "main_body": {
+          "n_solids": 1,
+          "n_faces": 117,
+          "cyl_faces": 32,
+          "bbox": [68.3, 122.3, 16.5],
+          "volume": 10815.07
+        },
+        "battery_door": {
+          "n_solids": 1,
+          "n_faces": 252,
+          "cyl_faces": 96,
+          "bbox": [59.9, 90.9, 5.85],
+          "volume": 11024.18
+        },
+        "buttons": {
+          "n_solids": 1,
+          "n_faces": 44,
+          "cyl_faces": 2,
+          "bbox": [5.78, 25.0, 5.45],
+          "volume": 278.63
+        }
+      }
+    },
+    {
+      "stage": "export",
+      "result": "regenerated main_body.step, buttons.step, battery_door.step, and shape.step after mount boss removal"
     }
   ]
 }

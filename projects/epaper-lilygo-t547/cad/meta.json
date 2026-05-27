@@ -1,7 +1,7 @@
 {
   "task_id": "lilygo-eink-4p7-full-enclosure-v15",
   "status": "success",
-  "description": "Compact LilyGo Screen-4.7-S3 flush enclosure body for a screen-to-PCB bonded stack, with the former rear cover fused into the main body and PCB fixed by bottom screws.",
+  "description": "Compact LilyGo Screen-4.7-S3 flush enclosure body for a screen-to-PCB bonded stack, with the former rear cover fused into the main body and the four internal PCB screw bosses removed.",
   "units": "mm",
   "parts": [
     "main_body.step",
@@ -10,13 +10,13 @@
   ],
   "key_dimensions": {
     "screen": "120 x 66",
-    "outer_body": "123.8 x 69.8",
-    "enclosure_top_height": 15.5,
+    "outer_body": "122.3 x 68.3",
+    "enclosure_top_height": 16.5,
     "screen_corner_radius": 1.2,
     "outer_corner_radius": 1.5,
     "battery_pocket_center": [0.0, 0.0],
     "battery_cell": "82 x 51 x 4",
-    "battery_pocket_clear_span": "x -26.3..26.3, y -41.8..41.8; centered and clear of the verified screw bosses",
+    "battery_pocket_clear_span": "x -26.3..26.3, y -41.8..41.8; centered with the four internal screw bosses removed",
     "battery_retainer": "1.4 mm thick x 1.8 mm high rails on the inside of battery_door.step",
     "battery_door_design": "centered sliding removable rear battery door with two upper insertion tongues, enlarged receiver pockets, a lower low-profile snap tooth, longer flex relief slots, and a fingernail notch",
     "battery_door_recess": "60.6 x 91.6 x 1.1 deep",
@@ -56,27 +56,12 @@
     "button_heat_stake_mounting": "two 1.6 mm diameter posts grow from the inner side wall at the solid webs between the three button openings; the button strip has 1.95 mm clearance holes and is fixed by heat-melting the post tips after installation",
     "adhesive_tape_thickness_assumption": 0.2,
     "screen_board_stack_height_assumption": 8.2,
-    "mount_boss": "7.0 diameter x 8.2 high; raised 3.0 mm for M3 screws",
-    "bottom_screw_clearance": 3.2,
-    "bottom_screw_head_pocket": "6.0 diameter x 2.0 deep",
-    "verified_h716_v24_pcb_hole_reference": "PCB left-top origin, board_x along 120mm length, board_y along 66mm width",
-    "verified_h716_v24_pcb_hole_points": [
-      [5.0, 4.9],
-      [113.5, 4.9],
-      [5.0, 48.4],
-      [113.5, 58.9]
-    ],
-    "cad_mount_points": [
-      [-28.1, -55.0],
-      [-28.1, 53.5],
-      [15.4, -55.0],
-      [25.9, 53.5]
-    ]
+    "pcb_retention": "four internal PCB screw bosses and bottom screw pockets removed; bonded screen/PCB stack is seated by the flush front fit and adhesive"
   },
   "changes_from_v14": [
     "Removed all screen snap latches and discrete support pads.",
     "Kept the top as a flush side-wall opening so the bonded screen face can sit level with the shell edge.",
-    "Changed rear cover PCB mounts to through holes with bottom screw head pockets.",
+    "Removed the rear cover PCB mounts and bottom screw head pockets.",
     "Retained the compact 123 x 69 mm footprint and constrained side connector windows."
   ],
   "changes_from_verified_h716_hole_update": [
@@ -85,7 +70,7 @@
   ],
   "changes_from_corner_and_battery_update": [
     "Reduced the screen/opening corner radius to 1.2 mm and the outer enclosure radius to 1.5 mm to match the very small real board corner radius.",
-    "Moved the battery retaining pocket center from y=18.0 mm to y=5.0 mm so the battery area avoids the fixed screw/boss positions."
+    "Moved the battery retaining pocket center from y=18.0 mm to y=5.0 mm; later revisions removed the fixed screw/boss positions entirely."
   ],
   "changes_from_h716_side_io_update": [
     "Repositioned the three side-button openings, SD-card opening, and Type-C opening using the H716 V2.4 enclosure model as reference.",
@@ -105,7 +90,7 @@
   "changes_from_rear_vent_update": [
     "Added five rounded vertical through-slots on the left rear-cover area outside the battery pocket.",
     "Added four short rounded horizontal through-slots near the upper and lower rear-cover edges for extra airflow.",
-    "Kept all rear ventilation slots clear of the battery retaining rails and verified PCB screw boss positions."
+    "Kept all rear ventilation slots clear of the battery retaining rails and former PCB screw boss positions."
   ],
   "changes_from_centered_openable_battery_update": [
     "Moved the battery pocket center to the enclosure center at x=0.0, y=0.0.",
@@ -209,27 +194,32 @@
     "Made the lower battery-door snap easier to engage by reducing snap height from 0.9 mm to 0.55 mm, reducing snap overlap from 1.2 mm to 0.8 mm, and increasing receiver clearance from 0.35 mm to 0.65 mm.",
     "Lengthened and widened the battery-door flex relief slots to make the lower latch tongue more flexible."
   ],
+  "changes_from_mount_boss_removal": [
+    "Removed the four internal cylindrical PCB screw bosses from the fused main body.",
+    "Removed the matching 3.2 mm bottom screw clearance holes and 6.0 mm screw head pockets.",
+    "Regenerated main_body.step, buttons.step, battery_door.step, and shape.step."
+  ],
   "validation": {
     "passed": true,
     "tool": "CadQuery STEP export plus per-part STEP import/topology check",
     "metrics": {
       "main_body": {
         "n_solids": 1,
-        "bbox": [69.8, 123.8, 15.5],
-        "volume": 15407.37
+        "bbox": [68.3, 122.3, 16.5],
+        "volume": 10815.07
       },
       "battery_door": {
         "n_solids": 1,
-        "bbox": [59.9, 91.9, 3.65],
-        "volume": 10213.88
+        "bbox": [59.9, 90.9, 5.85],
+        "volume": 11024.18
       },
       "buttons": {
         "n_solids": 1,
-        "bbox": [6.53, 25.0, 5.45],
-        "volume": 286.6
+        "bbox": [5.78, 25.0, 5.45],
+        "volume": 278.63
       }
     }
   },
-  "assembly_note": "Screen and PCB are assumed to be bonded first with thin 3M double-sided tape; the PCB screws define the stack position. Measure real stack height before printing if exact flushness is critical.",
+  "assembly_note": "Screen and PCB are assumed to be bonded first with thin 3M double-sided tape; the bonded stack seats into the flush front opening without the four internal screw bosses. Measure real stack height before printing if exact flushness is critical.",
   "preview_note": "No preview/STL regeneration is performed for this revision; the project folder keeps STEP outputs only."
 }

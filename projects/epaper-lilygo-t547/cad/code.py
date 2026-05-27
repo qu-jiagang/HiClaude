@@ -2,7 +2,7 @@ import cadquery as cq
 
 # LilyGo Screen-4.7-S3 compact enclosure v15.
 # Assembly split:
-#   enclosure_body = fused side shell and rear cover with bottom screw access
+#   enclosure_body = fused side shell and rear cover
 #   battery_door/buttons = separate removable/service parts
 
 # Compact footprint driven directly by the user's measured 120 x 66 mm front.
@@ -114,29 +114,11 @@ battery_door_vent_slots = [
     (battery_door_vent_slot_width, battery_door_vent_slot_length, 12.0, 24.0),
 ]
 
-# Board support/mount features on the rear cover. The screen is bonded to the
-# PCB with thin double-sided tape, so the PCB screws control the whole stack.
-# Verified H716 V2.4 hole positions are referenced from the PCB left-top
-# corner with board_x along the 120 mm length and board_y along the 66 mm width.
-pcb_length = 120.0
-pcb_width = 66.0
-verified_pcb_hole_points = [
-    (5.0, 4.9),
-    (113.5, 4.9),
-    (5.0, 48.4),
-    (113.5, 58.9),
-]
-pcb_mount_points = [
-    (board_y - pcb_width / 2.0, board_x - pcb_length / 2.0)
-    for board_x, board_y in verified_pcb_hole_points
-]
+# Board support/mount bosses were removed from the main body. The screen/PCB
+# stack is retained by its front fit and adhesive instead of four internal
+# posts that conflict with the battery bay and add unnecessary print detail.
 adhesive_tape_thickness = 0.2
 screen_board_stack_height = 8.2
-mount_boss_diameter = 7.0
-mount_screw_clearance_diameter = 3.2
-mount_screw_head_diameter = 6.0
-mount_screw_head_depth = 2.0
-mount_boss_height = shell_height - screen_board_stack_height + 3.0
 
 bat_pad_x = -1.0
 bat_pad_y = 4.0
@@ -145,7 +127,7 @@ wire_channel_depth = 0.7
 side_opening_depth = 7.0
 
 # No front snap retention in this revision. Screen and PCB are first bonded as
-# one stack, then the PCB is screwed to the rear cover from below.
+# one stack, then seated into the flush front opening.
 
 # Connector and control cutouts in the side shell. These boxes are transferred
 # directly from h716_032n_frm.stl, whose frame is 76 x 128 x 15.7 mm and has a
@@ -242,7 +224,7 @@ def cut_centered_box(body, width, length, height, center):
 
 # ---------------------------------------------------------------------------
 # Main side shell: flush side wall. The bonded screen/PCB stack is installed
-# from the front and fixed by screws through the rear-cover PCB mounts.
+# from the front and retained by the close flush fit plus adhesive.
 # ---------------------------------------------------------------------------
 side_shell = rounded_box(outer_width, outer_length, shell_height, outer_radius).translate((0, 0, rear_cover_thickness))
 side_cavity = rounded_cutter(
@@ -459,8 +441,8 @@ wire_b = (
 )
 rear_cover = rear_cover.cut(wire_a).cut(wire_b)
 
-# Through vents on the rear face. They are cut before screw bosses are added
-# and stay clear of battery rails, screw bosses, and wire channels.
+# Through vents on the rear face. They stay clear of battery rails and wire
+# channels.
 for vent_width, vent_length, vent_x, vent_y in rear_vent_slots:
     vent = rounded_cutter(
         vent_width,
@@ -542,23 +524,6 @@ for vent_width, vent_length, vent_x, vent_y in battery_door_vent_slots:
 # Keep the battery retaining frame continuous. The door's vent and flex cuts
 # happen first so they cannot leave open gaps in the four-sided retainer.
 battery_door = battery_door.union(battery_retainer)
-
-# PCB mounting bosses on rear cover.
-for x, y in pcb_mount_points:
-    boss = cq.Workplane("XY").circle(mount_boss_diameter / 2.0).extrude(mount_boss_height).translate((x, y, rear_cover_thickness))
-    screw_hole = (
-        cq.Workplane("XY")
-        .circle(mount_screw_clearance_diameter / 2.0)
-        .extrude(rear_cover_thickness + mount_boss_height + 0.8)
-        .translate((x, y, -0.4))
-    )
-    head_pocket = (
-        cq.Workplane("XY")
-        .circle(mount_screw_head_diameter / 2.0)
-        .extrude(mount_screw_head_depth + 0.2)
-        .translate((x, y, -0.1))
-    )
-    rear_cover = rear_cover.union(boss).cut(screw_hole).cut(head_pocket)
 
 enclosure_body = main_body.union(rear_cover, clean=False)
 for opening_cut in side_opening_cutters + end_opening_cutters:
