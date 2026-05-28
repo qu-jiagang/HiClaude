@@ -4,6 +4,7 @@ import json
 import os
 import sqlite3
 import subprocess
+import sys
 import time
 import urllib.request
 import urllib.error
@@ -84,9 +85,18 @@ def _fmt_reset(dt: datetime) -> str:
 def _get(url: str, headers: dict) -> dict | None:
     try:
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:
             return json.loads(resp.read())
-    except Exception:
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8", errors="replace")[:300]
+        except Exception:
+            pass
+        print(f"[collector] HTTP {e.code} {url} :: {body}", file=sys.stderr, flush=True)
+        return None
+    except Exception as e:
+        print(f"[collector] {type(e).__name__} {url} :: {e}", file=sys.stderr, flush=True)
         return None
 
 
@@ -148,8 +158,11 @@ def collect_claude_quotas() -> list[Quota]:
             agent="claude", window=window, label=label,
             used=float(util), limit=100.0, reset_at=resets_at,
         ))
-    _claude_quota_cache = (now, quotas)
-    _file_cache_write("claude", quotas)
+    if quotas:
+        _claude_quota_cache = (now, quotas)
+        _file_cache_write("claude", quotas)
+    else:
+        print(f"[collector] claude usage parsed empty; raw keys={list(data.keys())}", file=sys.stderr, flush=True)
     return quotas
 
 

@@ -160,15 +160,17 @@ clip_clearance = 0.18
 clip_grip_height = rear_cover_thickness + shell_height
 clip_span_y = 20.0
 clip_y_positions = (-38.0, 38.0)
-clip_profile_x0 = -3.8
-clip_profile_x1 = 17.0
-clip_base_height_z = 3.4
 clip_display_tilt_deg = 18.0
-clip_front_roll_radius = 2.2
-clip_back_wall_x0 = 2.0
-clip_back_wall_x1 = 5.0
-clip_back_wall_height_z = 15.0
-clip_back_top_radius = 1.3
+clip_table_base_x = 34.0
+clip_table_base_width_x = 22.0
+clip_table_base_height_z = 3.0
+clip_table_front_roll_x = 26.5
+clip_table_front_roll_z = 4.2
+clip_table_front_roll_radius = 2.4
+clip_table_back_wall_x = 38.5
+clip_table_back_wall_thickness_x = 3.0
+clip_table_back_wall_height_z = 18.0
+clip_table_back_wall_top_radius = 1.4
 
 # Validation-only bridges to make a single connected assembly for zero-to-cad.
 validation_bridge_width = 1.0
@@ -205,47 +207,31 @@ def rear_vent_cutter(x, y):
 
 
 def side_clip_foot(y_center):
-    side_x = outer_width / 2.0
-    tilt_drop = (clip_profile_x1 - clip_profile_x0) * math.tan(math.radians(clip_display_tilt_deg))
-    base_bottom_inner_z = -clip_base_height_z - clip_clearance
-    base_bottom_outer_z = base_bottom_inner_z - tilt_drop
-    profile = (
-        cq.Workplane("XZ")
-        .polyline(
-            [
-                (side_x + clip_profile_x0, base_bottom_inner_z),
-                (side_x + clip_profile_x1, base_bottom_outer_z),
-                (side_x + clip_profile_x1, -clip_clearance),
-                (side_x + clip_back_wall_x1, -clip_clearance),
-                (side_x + clip_back_wall_x1, clip_back_wall_height_z - clip_back_top_radius),
-                (side_x + clip_back_wall_x1 - 0.35, clip_back_wall_height_z),
-                (side_x + clip_back_wall_x0 + 0.35, clip_back_wall_height_z),
-                (side_x + clip_back_wall_x0, clip_back_wall_height_z - clip_back_top_radius),
-                (side_x + clip_back_wall_x0, 0.75),
-                (side_x + 0.25, 0.75),
-                (side_x + 0.25, -clip_clearance),
-                (side_x + clip_profile_x0, -clip_clearance),
-            ]
-        )
-        .close()
-        .extrude(clip_span_y)
-        .translate((0.0, y_center + clip_span_y / 2.0, 0.0))
+    base = (
+        cq.Workplane("XY")
+        .box(clip_table_base_width_x, clip_span_y, clip_table_base_height_z, centered=True)
+        .translate((clip_table_base_x, y_center, clip_table_base_height_z / 2.0))
     )
     front_roll = (
         cq.Workplane("XZ")
-        .circle(clip_front_roll_radius)
+        .circle(clip_table_front_roll_radius)
         .extrude(clip_span_y)
-        .translate((side_x + clip_profile_x0 + clip_front_roll_radius, y_center + clip_span_y / 2.0, -clip_front_roll_radius - clip_clearance))
+        .translate((clip_table_front_roll_x, y_center - clip_span_y / 2.0, clip_table_front_roll_z))
+    )
+    back_wall = (
+        cq.Workplane("XY")
+        .box(clip_table_back_wall_thickness_x, clip_span_y, clip_table_back_wall_height_z, centered=True)
+        .translate((clip_table_back_wall_x, y_center, clip_table_back_wall_height_z / 2.0))
     )
     back_top_round = (
         cq.Workplane("XZ")
-        .circle(clip_back_top_radius)
+        .circle(clip_table_back_wall_top_radius)
         .extrude(clip_span_y)
-        .translate((side_x + (clip_back_wall_x0 + clip_back_wall_x1) / 2.0, y_center + clip_span_y / 2.0, clip_back_wall_height_z - clip_back_top_radius))
+        .translate((clip_table_back_wall_x, y_center - clip_span_y / 2.0, clip_table_back_wall_height_z))
     )
-    foot = profile.union(front_roll, clean=False).union(back_top_round, clean=False)
+    foot = base.union(front_roll, clean=False).union(back_wall, clean=False).union(back_top_round, clean=False)
     try:
-        foot = foot.edges("|Y").fillet(0.35)
+        foot = foot.edges("|Y").fillet(0.45)
     except Exception:
         pass
     return foot

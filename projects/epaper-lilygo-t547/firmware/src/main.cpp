@@ -8,6 +8,7 @@
 #include <Adafruit_GFX.h>
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
+#include <Preferences.h>
 #include <U8g2_for_Adafruit_GFX.h>
 #include <WiFi.h>
 #include <Wire.h>
@@ -65,6 +66,27 @@ constexpr uint8_t BLACK = 0;
 constexpr uint8_t DARK_GRAY = 80;
 constexpr uint8_t LIGHT_GRAY = 210;
 constexpr uint8_t WHITE = 255;
+
+// Invert mode: swapped ink/paper for dark-theme rendering.
+// Toggled locally by tapping the hiClaude zone in OVERVIEW; persisted in NVS.
+bool g_invert = false;
+Preferences g_prefs;
+inline uint8_t INK()   { return g_invert ? WHITE : BLACK; }
+inline uint8_t PAPER() { return g_invert ? BLACK : WHITE; }
+
+void loadInvertPref() {
+  if (g_prefs.begin("hiclaude", true)) {
+    g_invert = g_prefs.getBool("invert", false);
+    g_prefs.end();
+  }
+}
+
+void saveInvertPref() {
+  if (g_prefs.begin("hiclaude", false)) {
+    g_prefs.putBool("invert", g_invert);
+    g_prefs.end();
+  }
+}
 constexpr uint32_t REFRESH_INTERVAL_MS = STATE_REFRESH_INTERVAL_MS;
 constexpr uint32_t WIFI_TIMEOUT_MS = 20000;
 constexpr uint32_t LIGHT_SLEEP_MIN_MS = LIGHT_SLEEP_IDLE_MS;
@@ -114,7 +136,7 @@ class EpdFramebufferCanvas : public Adafruit_GFX {
     if (!framebuffer || x < 0 || y < 0 || x >= EPD_WIDTH || y >= EPD_HEIGHT) {
       return;
     }
-    const uint8_t ink = color ? BLACK : WHITE;
+    const uint8_t ink = color ? INK() : PAPER();
     if (text_scale <= 1) {
       if (clip_enabled && (x < clip_x0 || x >= clip_x1 || y < clip_y0 || y >= clip_y1)) {
         return;
@@ -184,7 +206,8 @@ struct DisplayView {
 DisplayView g_view;
 
 void clearFramebuffer() {
-  memset(framebuffer, 0xFF, EPD_WIDTH * EPD_HEIGHT / 2);
+  // 0xFF = both nibbles white (15), 0x00 = both black. Picks the current paper.
+  memset(framebuffer, g_invert ? 0x00 : 0xFF, EPD_WIDTH * EPD_HEIGHT / 2);
 }
 
 void setFontLarge() {
@@ -249,7 +272,10 @@ void fill(int32_t x, int32_t y, int32_t w, int32_t h, uint8_t color) {
   epd_fill_rect(x, y, w, h, color, framebuffer);
 }
 
-void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t color = BLACK) {
+void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1) {
+  epd_draw_line(x0, y0, x1, y1, INK(), framebuffer);
+}
+void line(int32_t x0, int32_t y0, int32_t x1, int32_t y1, uint8_t color) {
   epd_draw_line(x0, y0, x1, y1, color, framebuffer);
 }
 
@@ -404,18 +430,19 @@ String clockString() {
 
 void drawBar(int32_t x, int32_t y, int32_t w, int32_t h, int percent) {
   percent = constrain(percent, 0, 100);
-  rect(x, y, w, h, BLACK);
+  rect(x, y, w, h, INK());
   if (percent > 0) {
-    fill(x + 2, y + 2, ((w - 4) * percent) / 100, h - 4, BLACK);
+    fill(x + 2, y + 2, ((w - 4) * percent) / 100, h - 4, INK());
   }
 }
 
 // Draw a filled (active) or outline (idle) status dot
+// drawPixel maps color != 0 -> ink. Pass 1 so polarity tracks INK()/PAPER().
 void drawStatusDot(int32_t cx, int32_t cy, bool active) {
   if (active) {
-    canvas.fillCircle(cx, cy, 7, 0);
+    canvas.fillCircle(cx, cy, 7, 1);
   } else {
-    canvas.drawCircle(cx, cy, 7, 0);
+    canvas.drawCircle(cx, cy, 7, 1);
   }
 }
 
@@ -488,7 +515,7 @@ void drawTaskItem(int32_t x, int32_t y, int32_t w, const String &status, const S
 
 // Full-screen detail view: 5-hour quota bar in the header + up to 5 tasks
 void drawAgentTasksFull(int32_t x, int32_t y, int32_t w, int32_t h, const AgentView *agent) {
-  rect(x, y, w, h, BLACK);
+  rect(x, y, w, h, INK());
 
   const String label = agent ? agent->label : "Agent";
   setFontLarge();
@@ -527,7 +554,7 @@ void drawAgentTasksFull(int32_t x, int32_t y, int32_t w, int32_t h, const AgentV
 
 void drawAgentColumn(int32_t x, int32_t y, int32_t w, int32_t h, const AgentView *agent,
                      size_t max_title_chars = 7) {
-  rect(x, y, w, h, BLACK);
+  rect(x, y, w, h, INK());
 
   const String label = agent ? agent->label : "Agent";
   setFontLarge();
@@ -570,8 +597,11 @@ void drawAgentColumn(int32_t x, int32_t y, int32_t w, int32_t h, const AgentView
 // rows that changed since the last frame; periodically (or when forced) does
 // a flashing full refresh to clear e-paper ghosting.
 void presentFramebuffer() {
+  // Partial refresh uses WHITE_ON_WHITE / BLACK_ON_WHITE waveforms which only
+  // work for black-ink-on-white-paper rendering. Force full refresh under
+  // invert mode to redraw with correct polarity.
   const bool can_partial = prev_framebuffer && prev_valid &&
-                           !force_full_refresh &&
+                           !force_full_refresh && !g_invert &&
                            partial_since_full < FULL_REFRESH_EVERY;
 
   if (!can_partial) {
@@ -626,7 +656,7 @@ void presentFramebuffer() {
 
 void drawBootScreen(const String &line1, const String &line2 = "") {
   clearFramebuffer();
-  rect(12, 12, EPD_WIDTH - 24, EPD_HEIGHT - 24, BLACK);
+  rect(12, 12, EPD_WIDTH - 24, EPD_HEIGHT - 24, INK());
   setFontLarge();
   textAt("hiClaude", 32, 64);
   line(32, 88, EPD_WIDTH - 32, 88);
@@ -649,7 +679,7 @@ void drawState(const DisplayView &view, ViewMode mode = OVERVIEW) {
   clearFramebuffer();
   constexpr int32_t safe_x = 20;
   constexpr int32_t right = EPD_WIDTH - safe_x;
-  rect(10, 10, EPD_WIDTH - 20, EPD_HEIGHT - 20, BLACK);
+  rect(10, 10, EPD_WIDTH - 20, EPD_HEIGHT - 20, INK());
 
   drawHeader(view, mode);
   line(safe_x, HEADER_BOTTOM, right, HEADER_BOTTOM);
@@ -720,7 +750,14 @@ void handleTouch(const DisplayView &view) {
     if (view_valid) drawState(view, current_mode);
   } else {
     if (current_mode != OVERVIEW) {
+      // In a full-screen view: brand zone is the "back to overview" shortcut.
       current_mode = OVERVIEW;
+      force_full_refresh = true;
+      if (view_valid) drawState(view, current_mode);
+    } else {
+      // In overview: brand zone toggles invert (dark mode). Persist + redraw.
+      g_invert = !g_invert;
+      saveInvertPref();
       force_full_refresh = true;
       if (view_valid) drawState(view, current_mode);
     }
@@ -1020,6 +1057,8 @@ void setup() {
   Serial.begin(115200);
   delay(1000);
   Serial.printf("hiClaude LilyGo T5-ePaper-S3 firmware %s\n", FIRMWARE_LABEL);
+  loadInvertPref();
+  Serial.printf("Invert mode: %s\n", g_invert ? "ON" : "OFF");
 
   framebuffer = static_cast<uint8_t *>(ps_calloc(FRAMEBUFFER_SIZE, sizeof(uint8_t)));
   if (!framebuffer) {
