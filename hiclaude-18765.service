@@ -1,0 +1,14 @@
+[Unit]
+Description=HiClaude e-paper status service on port 18765
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/midea/GithubRepository/HiClaude
+ExecStart=/home/midea/GithubRepository/HiClaude/scripts/start-hiclaude-18765.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

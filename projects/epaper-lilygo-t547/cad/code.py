@@ -1,4 +1,5 @@
 import cadquery as cq
+import math
 
 # LilyGo Screen-4.7-S3 flush-screen enclosure v17.
 # Strict dimensional reference: refs/h716_032n_4.stp
@@ -153,6 +154,22 @@ button_heat_stake_tip_allowance = 0.45
 
 side_opening_depth = 7.0
 
+# Separate removable side-clip feet. These are exported as an independent
+# accessory STEP and are not fused into the enclosure body.
+clip_clearance = 0.18
+clip_grip_height = rear_cover_thickness + shell_height
+clip_span_y = 20.0
+clip_y_positions = (-38.0, 38.0)
+clip_profile_x0 = -3.8
+clip_profile_x1 = 17.0
+clip_base_height_z = 3.4
+clip_display_tilt_deg = 18.0
+clip_front_roll_radius = 2.2
+clip_back_wall_x0 = 2.0
+clip_back_wall_x1 = 5.0
+clip_back_wall_height_z = 15.0
+clip_back_top_radius = 1.3
+
 # Validation-only bridges to make a single connected assembly for zero-to-cad.
 validation_bridge_width = 1.0
 validation_bridge_length = 4.0
@@ -185,6 +202,53 @@ def rear_vent_cutter(x, y):
         rear_vent_cut_depth,
         rear_vent_slot_radius,
     ).translate((x, y, -0.5))
+
+
+def side_clip_foot(y_center):
+    side_x = outer_width / 2.0
+    tilt_drop = (clip_profile_x1 - clip_profile_x0) * math.tan(math.radians(clip_display_tilt_deg))
+    base_bottom_inner_z = -clip_base_height_z - clip_clearance
+    base_bottom_outer_z = base_bottom_inner_z - tilt_drop
+    profile = (
+        cq.Workplane("XZ")
+        .polyline(
+            [
+                (side_x + clip_profile_x0, base_bottom_inner_z),
+                (side_x + clip_profile_x1, base_bottom_outer_z),
+                (side_x + clip_profile_x1, -clip_clearance),
+                (side_x + clip_back_wall_x1, -clip_clearance),
+                (side_x + clip_back_wall_x1, clip_back_wall_height_z - clip_back_top_radius),
+                (side_x + clip_back_wall_x1 - 0.35, clip_back_wall_height_z),
+                (side_x + clip_back_wall_x0 + 0.35, clip_back_wall_height_z),
+                (side_x + clip_back_wall_x0, clip_back_wall_height_z - clip_back_top_radius),
+                (side_x + clip_back_wall_x0, 0.75),
+                (side_x + 0.25, 0.75),
+                (side_x + 0.25, -clip_clearance),
+                (side_x + clip_profile_x0, -clip_clearance),
+            ]
+        )
+        .close()
+        .extrude(clip_span_y)
+        .translate((0.0, y_center + clip_span_y / 2.0, 0.0))
+    )
+    front_roll = (
+        cq.Workplane("XZ")
+        .circle(clip_front_roll_radius)
+        .extrude(clip_span_y)
+        .translate((side_x + clip_profile_x0 + clip_front_roll_radius, y_center + clip_span_y / 2.0, -clip_front_roll_radius - clip_clearance))
+    )
+    back_top_round = (
+        cq.Workplane("XZ")
+        .circle(clip_back_top_radius)
+        .extrude(clip_span_y)
+        .translate((side_x + (clip_back_wall_x0 + clip_back_wall_x1) / 2.0, y_center + clip_span_y / 2.0, clip_back_wall_height_z - clip_back_top_radius))
+    )
+    foot = profile.union(front_roll, clean=False).union(back_top_round, clean=False)
+    try:
+        foot = foot.edges("|Y").fillet(0.35)
+    except Exception:
+        pass
+    return foot
 
 
 def m3_through_cutter(boss_x, boss_y):
@@ -330,6 +394,8 @@ for stake_y in button_heat_stake_y_positions:
         .translate((button_carrier_center_x - button_carrier_depth / 2.0 - 0.3, stake_y, button_carrier_center_z))
     )
     button_bar = button_bar.cut(stake_hole)
+
+side_clip_feet = side_clip_foot(clip_y_positions[0]).union(side_clip_foot(clip_y_positions[1]), clean=False)
 
 # ---------------------------------------------------------------------------
 # Rear cover (solid). The battery, rails, and four M3 bosses now live on

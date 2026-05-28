@@ -59,7 +59,7 @@ http://192.168.31.127:18765/state.json
 已验证：
 
 ```text
-pytest: 3 passed
+pytest: 10 passed
 pio run: SUCCESS
 pio upload: SUCCESS
 LilyGo GET /state.json: 200
@@ -71,7 +71,7 @@ LilyGo GET /state.json: 200
 - 后续如果需要更多任务队列信息，再考虑分页或服务端渲染图片。
 - 后续再验证电池供电和休眠刷新。
 
-## Python 环境
+## 电脑端状态服务
 
 推荐在项目根目录创建虚拟环境：
 
@@ -83,25 +83,73 @@ python3 -m pip install -e ".[dev,display]"
 
 如果只想直接运行状态服务，也可以不用安装包，直接用 `PYTHONPATH=src`。
 
-生成演示状态：
+### 演示状态
 
 ```bash
 PYTHONPATH=src python3 -m agent_epaper.cli --state .agent-epaper-demo/state.json demo
 ```
 
-启动状态服务：
+启动静态演示服务：
 
 ```bash
 PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 18765 --state .agent-epaper-demo/state.json
 ```
 
-启动实时采集状态服务：
+`--state` 模式读取一个固定 JSON 文件，适合演示和手动写状态；屏幕内容不会自动跟随本机 Claude Code / Codex 会话变化。
+
+### 实时采集服务
+
+前台运行：
 
 ```bash
 PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 18765 --collect
 ```
 
-浏览器打开：
+`--collect` 模式会在每次 HTTP 请求时从本机 Claude Code / Codex 会话和额度缓存实时生成状态，适合实机长期运行。
+
+推荐使用 systemd 用户服务在后台运行：
+
+```bash
+mkdir -p ~/.config/systemd/user
+cp hiclaude-18765.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user start hiclaude-18765.service
+```
+
+开机自动启动：
+
+```bash
+systemctl --user enable hiclaude-18765.service
+```
+
+停止服务：
+
+```bash
+systemctl --user stop hiclaude-18765.service
+```
+
+取消开机自动启动：
+
+```bash
+systemctl --user disable hiclaude-18765.service
+```
+
+查看状态和日志：
+
+```bash
+systemctl --user status hiclaude-18765.service --no-pager
+journalctl --user -u hiclaude-18765.service -f
+```
+
+修改 `hiclaude-18765.service` 或 `scripts/start-hiclaude-18765.sh` 后重新加载并重启：
+
+```bash
+cp hiclaude-18765.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user restart hiclaude-18765.service
+```
+
+访问地址：
 
 ```text
 http://127.0.0.1:18765/
@@ -110,8 +158,6 @@ http://127.0.0.1:18765/screen.svg
 ```
 
 说明：本机 `8765` 端口已经被其他 Node 服务占用，所以这里使用 `18765`。如果你机器上 `18765` 也被占用，可以换成其他端口，但固件里的 `STATE_URL` 也要同步改。
-
-`--state` 模式读取一个固定 JSON 文件，适合演示和手动写状态；`--collect` 模式会在每次 HTTP 请求时从本机 Claude Code / Codex 会话和额度缓存实时生成状态，适合实机长期运行。
 
 ## Claude Code / Codex 采集原理
 
@@ -393,7 +439,8 @@ Flash: 16MB
 确认电脑端服务正在运行：
 
 ```bash
-PYTHONPATH=src python3 -m agent_epaper.server --host 0.0.0.0 --port 18765 --state .agent-epaper-demo/state.json
+systemctl --user status hiclaude-18765.service --no-pager
+curl http://127.0.0.1:18765/state.json
 ```
 
 LilyGo 成功访问时，服务端日志会出现类似：
@@ -419,13 +466,15 @@ Fetching http://192.168.31.127:18765/state.json
 当前验证结果：
 
 ```text
-3 passed
+10 passed
 ```
 
 ## 项目结构
 
 ```text
 src/agent_epaper/                       Python CLI、状态模型、HTTP 服务、渲染逻辑
+scripts/start-hiclaude-18765.sh         systemd 调用的 18765 实时采集服务启动脚本
+hiclaude-18765.service                  systemd 用户服务定义
 projects/epaper-lilygo-t547/cad/        墨水屏全包外壳 STEP / CadQuery
 projects/epaper-lilygo-t547/firmware/   LilyGo T5-ePaper-S3 固件
 projects/epaper-lilygo-t547/docs/       原厂引脚图、原理图、REFERENCE.md
@@ -436,7 +485,7 @@ tests/                                  Python 单元测试
 
 ## 备注
 
-- 当前没有假设 Claude Code / Codex 有稳定公开额度 API，额度先通过 CLI 写入。
+- 当前没有假设 Claude Code / Codex 的本地会话文件格式是稳定公开协议；采集逻辑跟随本机工具实际文件结构维护。
 - 固件第一版渲染偏基础，重点是验证 Wi-Fi、HTTP、JSON、PSRAM 和刷屏链路。
 - 固件侧已加入 U8g2 中文字体，继续保持拉取 JSON 后在设备端渲染。
 - 首次调试建议保持 USB-C 连接，电池和休眠放到后续阶段验证。
