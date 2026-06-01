@@ -4,7 +4,8 @@ Generated via the zero-to-cad skill (Z2C agentic CAD synthesis loop).
 
 Reference: design.md + concept-06-fixed-15deg.png in this directory.
 
-Assembly method: M4 fan screws clamp front_cover -> fan -> rear_shell bosses;
+Assembly method: the fan sits in the rear_shell pocket without screw holes;
+                 a separate dark radial grille seats over the front opening.
                  fan/controller wiring is routed through a serviceable
                  right-side gutter into a directly imported reference
                  controller shell. top_spine / wedge_feet / rear_heel are
@@ -18,6 +19,7 @@ Coordinate system:
 Outputs (next to this file):
     fd14_claude_pixel_fan_enclosure.step  — full assembly
     parts/front_cover.step / .stl
+    parts/front_grille.step / .stl
     parts/rear_shell.step  / .stl
     parts/top_spine.step   / .stl
     parts/control_pod.step / .stl
@@ -32,44 +34,45 @@ from pathlib import Path
 import cadquery as cq
 
 # === Parameters (mm) ===
-# FD14 fan
+# DeepCool FD14 official frame dimensions: 140 × 140 × 25 mm.
+# 12_14CM_DesktopFan.3mf reference Mainbody inner side planes:
+# X = ±70.952 mm -> 141.904 mm usable fan slot width.
 fan_w = 140.0
 fan_h = 140.0
-fan_thick = 26.0
+fan_thick = 25.0
+fan_slot_w_ref = 141.904
+fan_slot_h_ref = 141.904
+fan_xy_clearance_ref = (fan_slot_w_ref - fan_w) / 2.0
 fan_bore_dia = 132.0
 
-# Pixel-robot silhouette
-body_w = 176.0
-body_h = 142.0
-body_cy = 10.0
-head_w = 104.0
-head_h = 32.0
-head_cy = 95.0
+# Fixed dark front grille styled after concept-05-wedge-feet.png.
+front_grille_outer_dia = 128.0
+front_grille_ring_w = 2.8
+front_grille_ring_radii = (22.0, 40.0, 58.0)
+front_grille_spoke_w = 2.8
+front_grille_spoke_count = 12
+front_grille_hub_dia = 18.0
+front_grille_thick = 2.8
+
+# Pixel-robot silhouette, redesigned around the fan as the face center.
+body_w = 184.0
+body_h = 164.0
+body_cy = 2.0
+head_w = 178.0
+head_h = 30.0
+head_cy = 88.0
+eye_dx = 62.0
+eye_cy = 88.0
+eye_size = 16.0
 arm_w = 28.0
 arm_h = 42.0
-arm_dx = 102.0
-arm_cy = 34.0
+arm_dx = 106.0
+arm_cy = 22.0
 leg_w = 30.0
 leg_h = 42.0
 leg_dx = 42.0
-leg_cy = -80.0
-fillet_r = 3.0
-
-# Printable fan clamping hardware, estimated from the common 140 mm PC fan
-# pattern. Use M4 fan screws through the front cover and fan frame into the
-# rear-shell pilot bosses.
-fan_mount_spacing_est = 124.5
-fan_mount_points = (
-    (-fan_mount_spacing_est / 2.0, body_cy - fan_mount_spacing_est / 2.0),
-    ( fan_mount_spacing_est / 2.0, body_cy - fan_mount_spacing_est / 2.0),
-    (-fan_mount_spacing_est / 2.0, body_cy + fan_mount_spacing_est / 2.0),
-    ( fan_mount_spacing_est / 2.0, body_cy + fan_mount_spacing_est / 2.0),
-)
-front_screw_clearance_dia = 4.6
-front_screw_counterbore_dia = 8.8
-front_screw_counterbore_depth = 2.2
-rear_screw_boss_dia = 13.0
-rear_screw_boss_pilot_dia = 3.2
+leg_cy = -88.0
+fillet_r = 1.25
 
 # Z layout
 fan_z_clearance = 0.3
@@ -77,7 +80,12 @@ front_thick = 4.0
 front_z = fan_thick / 2.0 + fan_z_clearance      # +13.3
 rear_thick = 24.0
 rear_z_top = -fan_thick / 2.0 - fan_z_clearance  # -13.3
-duct_len = 15.0
+rear_duct_depth = 10.0
+rear_duct_outer_dia = 148.0
+rear_duct_inner_dia = 126.0
+rear_duct_attach_overlap = 1.5
+rear_guard_bar_w = 3.4
+rear_guard_thick = 2.4
 
 # Wiring path, estimated from the user's controller/fan photos.
 cable_w_est = 8.0
@@ -98,7 +106,7 @@ plug_pocket_depth_est = 5.5
 plug_pocket_y = -52.0
 side_exit_w_est = 10.0
 side_exit_h_est = 8.0
-side_exit_y = 8.0
+side_exit_y = 0.0
 
 # Controller shell copied directly from docs/refs/标准A_快充A_3PIN版.STEP.
 controller_reference_step = "标准A_快充A_3PIN版.STEP"
@@ -129,7 +137,7 @@ def desk_z(y: float) -> float:
     return desk_a + desk_b * y
 
 
-assembly_method = "m4_clamp_side_gutter_to_imported_controller_shell"
+assembly_method = "fan_pocket_side_gutter_to_imported_controller_shell"
 
 ORANGE = cq.Color(0.95, 0.42, 0.18, 1.0)
 DARK   = cq.Color(0.10, 0.10, 0.10, 1.0)
@@ -158,63 +166,61 @@ def silhouette(thickness: float, base_z: float):
 # --- Front cover ---
 def make_front_cover():
     cover = silhouette(front_thick, front_z)
-    cover = (cover.faces(">Z").workplane()
-             .center(0, body_cy).circle(fan_bore_dia / 2 - 4).cutThruAll())
-    # Four printable screw clearances aligned to the common 140 mm fan mount
-    # pattern. M4 fan screws pass through the cover and fan frame, then bite
-    # into the rear shell bosses added below.
-    for hx, hy in fan_mount_points:
-        through = (cq.Workplane("XY")
-                   .center(hx, hy)
-                   .circle(front_screw_clearance_dia / 2.0)
-                   .extrude(front_thick + 2.0)
-                   .translate((0, 0, front_z - 1.0)))
-        counterbore = (cq.Workplane("XY")
-                       .center(hx, hy)
-                       .circle(front_screw_counterbore_dia / 2.0)
-                       .extrude(front_screw_counterbore_depth + 0.2)
-                       .translate((0, 0, front_z + front_thick - front_screw_counterbore_depth)))
-        cover = cover.cut(through).cut(counterbore)
+    front_bore = (cq.Workplane("XY")
+                  .center(0, body_cy)
+                  .circle(fan_bore_dia / 2 - 4)
+                  .extrude(front_thick + 2.0)
+                  .translate((0, 0, front_z - 1.0)))
+    cover = cover.cut(front_bore)
     # Blind eye pockets (2 mm deep) — gives the 黑色方眼 look without exposing
     # the fan blades. Fill with black paint or do a filament swap on the top
     # 2 mm of the print.
     eye_depth = 2.0
-    for ex in (-26, 26):
+    for ex in (-eye_dx, eye_dx):
         eye_cut = (cq.Workplane("XY")
-                   .center(ex, head_cy + 2)
-                   .box(12, 12, eye_depth, centered=(True, True, False))
+                   .center(ex, eye_cy)
+                   .box(eye_size, eye_size, eye_depth, centered=(True, True, False))
                    .translate((0, 0, front_z + front_thick - eye_depth)))
         cover = cover.cut(eye_cut)
-    # Grille: 6 radial bars (30°) + concentric ring at r=30 + small hub.
-    # The ring splits each 30° wedge into smaller openings and braces the
-    # cover centre against finger / airflow deflection.
-    bar_th = 3.0
-    bar_len = fan_bore_dia - 20
-    rib_extrude = front_thick - 1.0
-    ribs = None
-    for ang_deg in (0, 30, 60, 90, 120, 150):
-        rib = (cq.Workplane("XY")
-               .rect(bar_len, bar_th)
-               .extrude(rib_extrude)
-               .translate((0, body_cy, front_z + 0.5))
-               .rotate((0, body_cy, 0), (0, body_cy, 1), ang_deg))
-        ribs = rib if ribs is None else ribs.union(rib)
-    ring_r = 30.0
-    ring = (cq.Workplane("XY").center(0, body_cy)
-            .circle(ring_r + bar_th / 2).circle(ring_r - bar_th / 2)
-            .extrude(rib_extrude)
-            .translate((0, 0, front_z + 0.5)))
-    ribs = ribs.union(ring)
+    return cover
+
+
+# --- Dark circular front grille ---
+def make_front_grille():
+    """Separate radial grille matching the concept image's fan-forward face."""
+    grille_z = front_z + front_thick + 0.4
+    outer_r = front_grille_outer_dia / 2.0
+    outer_ring = (cq.Workplane("XY").center(0, body_cy)
+                  .circle(outer_r)
+                  .circle(outer_r - front_grille_ring_w)
+                  .extrude(front_grille_thick)
+                  .translate((0, 0, grille_z)))
+    grille = outer_ring
+    for ring_r in front_grille_ring_radii:
+        ring = (cq.Workplane("XY").center(0, body_cy)
+                .circle(ring_r + front_grille_ring_w / 2.0)
+                .circle(ring_r - front_grille_ring_w / 2.0)
+                .extrude(front_grille_thick)
+                .translate((0, 0, grille_z)))
+        grille = grille.union(ring)
+    for index in range(front_grille_spoke_count):
+        angle_deg = index * 360.0 / front_grille_spoke_count
+        spoke = (cq.Workplane("XY")
+                 .rect(front_grille_outer_dia - 2.0 * front_grille_ring_w,
+                       front_grille_spoke_w)
+                 .extrude(front_grille_thick)
+                 .translate((0, body_cy, grille_z))
+                 .rotate((0, body_cy, 0), (0, body_cy, 1), angle_deg))
+        grille = grille.union(spoke)
     hub = (cq.Workplane("XY").center(0, body_cy)
-           .circle(8.0).extrude(rib_extrude)
-           .translate((0, 0, front_z + 0.5)))
-    ribs = ribs.union(hub)
-    bore_mask = (cq.Workplane("XY").center(0, body_cy)
-                 .circle(fan_bore_dia / 2 - 5)
-                 .extrude(front_thick + 2)
-                 .translate((0, 0, front_z - 1)))
-    ribs = ribs.intersect(bore_mask)
-    return cover.union(ribs)
+           .circle(front_grille_hub_dia / 2.0)
+           .extrude(front_grille_thick)
+           .translate((0, 0, grille_z)))
+    mask = (cq.Workplane("XY").center(0, body_cy)
+            .circle(outer_r)
+            .extrude(front_grille_thick + 1.0)
+            .translate((0, 0, grille_z - 0.5)))
+    return grille.union(hub).intersect(mask)
 
 
 # --- Rear shell ---
@@ -222,11 +228,18 @@ def make_rear_shell():
     shell = silhouette(rear_thick, rear_z_top - rear_thick)
     pocket_depth = rear_thick - 3.0
     fan_pocket = (cq.Workplane("XY").center(0, body_cy)
-                  .box(fan_w + 2, fan_h + 2, pocket_depth, centered=(True, True, False))
+                  .box(fan_slot_w_ref,
+                       fan_slot_h_ref,
+                       pocket_depth,
+                       centered=(True, True, False))
                   .translate((0, 0, rear_z_top - pocket_depth)))
     shell = shell.cut(fan_pocket)
-    shell = (shell.faces("<Z").workplane()
-             .center(0, body_cy).circle(fan_bore_dia / 2 - 2).cutThruAll())
+    rear_bore = (cq.Workplane("XY")
+                 .center(0, body_cy)
+                 .circle(fan_bore_dia / 2 - 2)
+                 .extrude(rear_thick + 4.0)
+                 .translate((0, 0, rear_z_top - rear_thick - 2.0)))
+    shell = shell.cut(rear_bore)
     # Serviceable wiring gutter. The user's photos show the fan harness and
     # PWM controller living along one fan side, so the cable path is kept in
     # the right side rail instead of crossing the blade opening or climbing
@@ -252,41 +265,40 @@ def make_rear_shell():
                  .box(16.0, side_exit_w_est, side_exit_h_est, centered=True)
                  .translate((0, 0, rear_z_top - side_exit_h_est / 2.0 + 1.0)))
     shell = shell.cut(side_exit)
-    boss_height = rear_thick - 0.2
-    boss_base_z = rear_z_top - rear_thick + 0.1
-    for hx, hy in fan_mount_points:
-        boss = (cq.Workplane("XY")
-                .center(hx, hy)
-                .circle(rear_screw_boss_dia / 2.0)
-                .extrude(boss_height)
-                .translate((0, 0, boss_base_z)))
-        pilot = (cq.Workplane("XY")
-                 .center(hx, hy)
-                 .circle(rear_screw_boss_pilot_dia / 2.0)
-                 .extrude(boss_height + 2.0)
-                 .translate((0, 0, boss_base_z - 1.0)))
-        shell = shell.union(boss).cut(pilot)
     for clip_y in wire_clip_y_positions:
         clip = (cq.Workplane("XY")
                 .center(wire_gutter_x, clip_y)
                 .box(wire_clip_w_est, wire_clip_len_est, wire_clip_thick_est, centered=True)
                 .translate((0, 0, rear_z_top - 0.2)))
         shell = shell.union(clip)
-    # Flared exhaust duct — outer cone minus inner cone for an annular flare
-    duct_z0 = rear_z_top - rear_thick
-    outer = (cq.Workplane("XY").center(0, body_cy)
-             .circle(fan_bore_dia / 2 + 2)
-             .workplane(offset=-duct_len)
-             .circle(fan_bore_dia / 2 + 14)
-             .loft(combine=False)
-             .translate((0, 0, duct_z0)))
-    inner = (cq.Workplane("XY").center(0, body_cy)
-             .circle(fan_bore_dia / 2 - 2)
-             .workplane(offset=-duct_len)
-             .circle(fan_bore_dia / 2 + 10)
-             .loft(combine=False)
-             .translate((0, 0, duct_z0)))
-    return shell.union(outer.cut(inner))
+    # Low-profile rear exhaust cage. This replaces the separate-looking
+    # flared cone with a short fan-like back ring that shares the same center
+    # as the front opening and overlaps the shell bottom for a true fused body.
+    duct_z0 = rear_z_top - rear_thick + rear_duct_attach_overlap
+    duct_back_z = duct_z0 - rear_duct_depth
+    rear_ring = (cq.Workplane("XY").center(0, body_cy)
+                 .circle(rear_duct_outer_dia / 2.0)
+                 .circle(rear_duct_inner_dia / 2.0)
+                 .extrude(rear_duct_depth)
+                 .translate((0, 0, duct_back_z)))
+    guard = None
+    for ang_deg in (0, 30, 60, 90, 120, 150):
+        bar = (cq.Workplane("XY")
+               .rect(rear_duct_outer_dia - 8.0, rear_guard_bar_w)
+               .extrude(rear_guard_thick)
+               .translate((0, body_cy, duct_back_z))
+               .rotate((0, body_cy, 0), (0, body_cy, 1), ang_deg))
+        guard = bar if guard is None else guard.union(bar)
+    rear_hub = (cq.Workplane("XY").center(0, body_cy)
+                .circle(10.0)
+                .extrude(rear_guard_thick)
+                .translate((0, 0, duct_back_z)))
+    rear_mask = (cq.Workplane("XY").center(0, body_cy)
+                 .circle(rear_duct_inner_dia / 2.0 + 2.0)
+                 .extrude(rear_guard_thick + 1.0)
+                 .translate((0, 0, duct_back_z - 0.5)))
+    guard = guard.union(rear_hub).intersect(rear_mask)
+    return shell.union(rear_ring).union(guard)
 
 
 # --- Top cable spine ---
@@ -365,6 +377,7 @@ def make_rear_heel():
 # --- Export ---
 PARTS = [
     ("front_cover",  make_front_cover, ORANGE),
+    ("front_grille", make_front_grille, DARK),
     ("rear_shell",   make_rear_shell,  ORANGE),
     ("top_spine",    make_top_spine,   ORANGE),
     ("control_pod",  make_control_pod, ORANGE),
